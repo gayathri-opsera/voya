@@ -1,86 +1,112 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { apiRequest } from "../../lib/api-client";
-import { SearchResponseSchema } from "@travel/contracts/search";
-import { ErrorCode } from "@travel/contracts";
-import { mockSearchResponse } from "../fixtures/search-response";
-import { envelope400, envelope502 } from "../fixtures/error-envelopes";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { apiGet, apiPost, apiPatch, apiDelete, configureAuth } from "../../lib/api/client.js";
 
-// Mock global fetch
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+// Mock fetch globally
+const fetchMock = vi.fn();
+vi.stubGlobal("fetch", fetchMock);
 
-function mockResponse(status: number, body: unknown): Response {
+// Mock env
+vi.mock("../../lib/env.js", () => ({
+  env: { NEXT_PUBLIC_API_BASE_URL: "http://api.test", NODE_ENV: "test" },
+}));
+
+function makeResponse(status: number, body: unknown, contentType = "application/json"): Response {
   return {
     ok: status >= 200 && status < 300,
     status,
+    headers: { get: () => contentType },
     json: async () => body,
+    text: async () => String(body),
   } as unknown as Response;
 }
 
-describe("apiRequest", () => {
-  beforeEach(() => {
-    mockFetch.mockReset();
+beforeEach(() => {
+  fetchMock.mockReset();
+  configureAuth(() => null);
+});
+
+describe("apiGet", () => {
+  it("returns parsed body on 200", async () => {
+    fetchMock.mockResolvedValue(makeResponse(200, { flights: [] }));
+    const result = await apiGet<{ flights: unknown[] }>("/search/flights");
+    expect(result.flights).toEqual([]);
   });
 
-  it("returns ok:true with parsed data for a 200 response matching the schema", async () => {
-    mockFetch.mockResolvedValueOnce(mockResponse(200, mockSearchResponse));
-    const result = await apiRequest("/api/flights/search", { method: "POST" }, SearchResponseSchema);
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.data.offers).toHaveLength(2);
-      expect(result.data.searchId).toBe("search_01J9X0Y2Z3A4B5C6D7E8F9G0");
-    }
+  it("throws ApiError on 404", async () => {
+    fetchMock.mockResolvedValue(
+      makeResponse(404, { error: { code: "not_found", message: "Not found" } }),
+    );
+    await expect(apiGet("/search/flights")).rejects.toMatchObject({ status: 404, code: "not_found" });
   });
 
-  it("returns ok:false with a valid ErrorEnvelope for a 400 response", async () => {
-    mockFetch.mockResolvedValueOnce(mockResponse(400, envelope400));
-    const result = await apiRequest("/api/flights/search", { method: "POST" }, SearchResponseSchema);
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.envelope.error.code).toBe(ErrorCode.VALIDATION_FAILED);
-      expect(result.envelope.error.field).toBe("origin");
-      expect(result.envelope.reference).toBe("corr_01J9X0Y2Z3A4B5C6D7E8F9G0");
-    }
+  it("throws ApiError with NETWORK_ERROR on fetch failure", async () => {
+    fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
+    await expect(apiGet("/search/flights")).rejects.toMatchObject({
+      code: "NETWORK_ERROR",
+      retryable: true,
+    });
   });
 
-  it("returns ok:false with a valid ErrorEnvelope for a 502 response", async () => {
-    mockFetch.mockResolvedValueOnce(mockResponse(502, envelope502));
-    const result = await apiRequest("/api/flights/search", { method: "POST" }, SearchResponseSchema);
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.envelope.error.code).toBe(ErrorCode.SUPPLIER_UNAVAILABLE);
-    }
+  it("attaches Authorization header when token configured", async () => {
+    configureAuth(() => "token_xyz");
+    fetchMock.mockResolvedValue(makeResponse(200, {}));
+    await apiGet("/me");
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = new Headers(init.headers);
+    expect(headers.get("Authorization")).toBe("Bearer token_xyz");
   });
 
-  it("returns ok:false with a generated envelope for a network error", async () => {
-    mockFetch.mockRejectedValueOnce(new Error("Network failure"));
-    const result = await apiRequest("/api/flights/search", { method: "POST" }, SearchResponseSchema);
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.envelope.error.code).toBe(ErrorCode.INTERNAL_ERROR);
-      expect(result.envelope.reference).toBeTruthy();
-    }
+  it("does not send Authorization header when no token", async () => {
+    configureAuth(() => null);
+    fetchMock.mockResolvedValue(makeResponse(200, {}));
+    await apiGet("/public");
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = new Headers(init.headers);
+    expect(headers.get("Authorization")).toBeNull();
   });
 
-  it("returns ok:false when response body is not valid JSON", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 503,
-      json: async () => { throw new SyntaxError("Unexpected token"); },
-    } as unknown as Response);
-    const result = await apiRequest("/api/flights/search", { method: "POST" }, SearchResponseSchema);
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.envelope.error.code).toBe(ErrorCode.INTERNAL_ERROR);
-      expect(result.envelope.reference).toBeTruthy();
-    }
+  it("serializes query params into URL", async () => {
+    fetchMock.mockResolvedValue(makeResponse(200, {}));
+    await apiGet("/search", { origin: "JFK", limit: 10 });
+    const [url] = fetchMock.mock.calls[0] as [string];
+    expect(url).toContain("origin=JFK");
+    expect(url).toContain("limit=10");
   });
 
-  it("returns ok:false with a generated envelope when 200 response doesn't match schema", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    mockFetch.mockResolvedValueOnce(mockResponse(200, { unexpected: "shape" }));
-    const result = await apiRequest("/api/flights/search", { method: "POST" }, SearchResponseSchema);
-    expect(result.ok).toBe(false);
-    consoleSpy.mockRestore();
+  it("throws ApiError on 500", async () => {
+    fetchMock.mockResolvedValue(
+      makeResponse(500, { error: { code: "internal_error", message: "Server error" } }),
+    );
+    await expect(apiGet("/flights")).rejects.toMatchObject({ status: 500 });
+  });
+});
+
+describe("apiPost", () => {
+  it("sends JSON body and returns parsed response", async () => {
+    fetchMock.mockResolvedValue(makeResponse(201, { id: "b1" }));
+    const result = await apiPost<{ id: string }>("/bookings", { flightId: "f1" });
+    expect(result.id).toBe("b1");
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(init.method).toBe("POST");
+    expect(init.body).toBe(JSON.stringify({ flightId: "f1" }));
+  });
+});
+
+describe("apiPatch", () => {
+  it("uses PATCH method", async () => {
+    fetchMock.mockResolvedValue(makeResponse(200, {}));
+    await apiPatch("/bookings/b1", { status: "cancelled" });
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(init.method).toBe("PATCH");
+  });
+});
+
+describe("apiDelete", () => {
+  it("uses DELETE method and handles 204", async () => {
+    fetchMock.mockResolvedValue(makeResponse(204, null, "text/plain"));
+    await expect(apiDelete("/sessions/s1")).resolves.toBeUndefined();
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(init.method).toBe("DELETE");
   });
 });
