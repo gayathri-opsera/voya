@@ -12,6 +12,7 @@
 export type RepositoryResult<T> =
   | { readonly ok: true;  readonly data: T }
   | { readonly ok: false; readonly kind: 'NOT_FOUND' }
+  | { readonly ok: false; readonly kind: 'EXPIRED'; readonly expiredAt: Date }
   | { readonly ok: false; readonly kind: 'VALIDATION_FAILURE'; readonly errors: readonly string[] }
   | { readonly ok: false; readonly kind: 'VERSION_CONFLICT'; readonly currentVersion: number }
   | { readonly ok: false; readonly kind: 'REPOSITORY_ERROR'; readonly cause: string };
@@ -34,6 +35,10 @@ export function validationFailure<T = never>(errors: readonly string[]): Reposit
 
 export function versionConflict<T = never>(currentVersion: number): RepositoryResult<T> {
   return { ok: false, kind: 'VERSION_CONFLICT', currentVersion };
+}
+
+export function expired<T = never>(expiredAt: Date): RepositoryResult<T> {
+  return { ok: false, kind: 'EXPIRED', expiredAt };
 }
 
 export function repoError<T = never>(cause: string): RepositoryResult<T> {
@@ -62,4 +67,10 @@ export function isVersionConflict<T>(
   r: RepositoryResult<T>,
 ): r is { ok: false; kind: 'VERSION_CONFLICT'; currentVersion: number } {
   return !r.ok && r.kind === 'VERSION_CONFLICT';
+}
+
+export function isExpired<T>(
+  r: RepositoryResult<T>,
+): r is { ok: false; kind: 'EXPIRED'; expiredAt: Date } {
+  return !r.ok && r.kind === 'EXPIRED';
 }

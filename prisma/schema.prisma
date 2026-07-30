@@ -156,6 +156,32 @@ enum RetentionApprovalStatus {
   APPROVED
 }
 
+enum OrchestratorPhase {
+  INTENT_CAPTURE
+  CLARIFICATION
+  SOURCING
+  VERIFICATION
+  PRESENTING
+  COMPLETE
+  EXPIRED
+}
+
+enum AgentStepStatus {
+  PENDING
+  RUNNING
+  COMPLETE
+  DEGRADED
+  FAILED
+  SKIPPED
+}
+
+enum CheckpointOutcome {
+  ACTIVE
+  INTENT_COMPLETE
+  DEGRADED
+  EXPIRED
+}
+
 // ---------------------------------------------------------------------------
 // TravellerProfile
 // Owns all traveller-linked aggregates. ownerRef is a tokenised reference
@@ -481,6 +507,67 @@ model RetentionPolicyMetadata {
   updatedAt          DateTime               @updatedAt
 
   @@map("retention_policy_metadata")
+}
+
+// ---------------------------------------------------------------------------
+// AssistantConversationCheckpoint
+// Versioned checkpoint for Path B orchestrator sessions. Stores normalized,
+// non-PII trip constraints, pending clarification fields, orchestrator phase,
+// per-agent status summary, and safe tool summaries. Raw prompt transcripts,
+// traveller PII, and payment data are never persisted here.
+// ---------------------------------------------------------------------------
+
+model AssistantConversationCheckpoint {
+  id                           String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionRef                   String
+  ownerRef                     String
+  checkpointVersion            Int                    @default(1)
+  orchestratorPhase            OrchestratorPhase      @default(INTENT_CAPTURE)
+  outcome                      CheckpointOutcome      @default(ACTIVE)
+  tripConstraintsJson          Json?
+  pendingClarificationJson     Json?
+  agentStatusSummaryJson       Json?
+  safeToolSummariesJson        Json?
+  naturalLanguageIntentSummary String?
+  expiresAt                    DateTime?
+  dataClassification           DataClassificationTier @default(INTERNAL)
+  createdAt                    DateTime               @default(now())
+  updatedAt                    DateTime               @updatedAt
+
+  agentSteps AssistantAgentStep[]
+
+  @@index([ownerRef, sessionRef])
+  @@index([expiresAt])
+  @@index([checkpointVersion])
+  @@map("assistant_conversation_checkpoint")
+}
+
+// ---------------------------------------------------------------------------
+// AssistantAgentStep
+// Per-domain agent step result within a conversation checkpoint.
+// DEGRADED status persists distinctly from FAILED so the UI progress spine
+// can show a degraded state rather than silently omitting the domain.
+// safeOutputSummaryJson holds only model-generated summary text, never raw
+// tool output, supplier credentials, or traveller PII.
+// ---------------------------------------------------------------------------
+
+model AssistantAgentStep {
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  checkpointId          String                 @db.Uuid
+  domain                InventoryDomain
+  status                AgentStepStatus        @default(PENDING)
+  stepIndex             Int
+  safeOutputSummaryJson Json?
+  degradedReasonCode    String?
+  dataClassification    DataClassificationTier @default(INTERNAL)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  checkpoint AssistantConversationCheckpoint @relation(fields: [checkpointId], references: [id])
+
+  @@index([checkpointId])
+  @@index([status])
+  @@map("assistant_agent_step")
 }
 
 // ---------------------------------------------------------------------------

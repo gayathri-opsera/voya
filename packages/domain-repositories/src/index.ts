@@ -18,11 +18,13 @@ export type { RepositoryResult } from './result.js';
 export {
   ok,
   notFound,
+  expired,
   validationFailure,
   versionConflict,
   repoError,
   isOk,
   isNotFound,
+  isExpired,
   isValidationFailure,
   isVersionConflict,
 } from './result.js';
@@ -77,6 +79,15 @@ export type {
   AuditRecordRepository,
 } from './interfaces/audit-record-repository.js';
 
+export type {
+  ConversationCheckpointRow,
+  AgentStepRow,
+  CreateCheckpointInput,
+  AppendStepResultInput,
+  UpdateCheckpointInput,
+  ConversationCheckpointRepository,
+} from './interfaces/conversation-checkpoint-repository.js';
+
 // ---------------------------------------------------------------------------
 // Prisma-backed implementations
 // ---------------------------------------------------------------------------
@@ -87,3 +98,4 @@ export { PrismaItineraryRepository } from './prisma/prisma-itinerary-repository.
 export { PrismaTripConfidenceReceiptRepository } from './prisma/prisma-trip-confidence-receipt-repository.js';
 export { PrismaSupplierManifestRepository } from './prisma/prisma-supplier-manifest-repository.js';
 export { PrismaAuditRecordRepository } from './prisma/prisma-audit-record-repository.js';
+export { PrismaConversationCheckpointRepository } from './prisma/prisma-conversation-checkpoint-repository.js';

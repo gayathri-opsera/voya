@@ -58,3 +58,34 @@ export {
 } from './data-classification.js';
 
 export type { DataClassificationPolicy, RetentionCalculationResult } from './data-classification.js';
+
+// ---------------------------------------------------------------------------
+// Trip constraints and clarification types
+// ---------------------------------------------------------------------------
+
+export {
+  ClarificationFieldKey,
+} from './trip-constraints.js';
+
+export type {
+  ClarificationField,
+  TripConstraints,
+  SafeToolSummary,
+} from './trip-constraints.js';
+
+// ---------------------------------------------------------------------------
+// Conversation checkpoint domain types
+// ---------------------------------------------------------------------------
+
+export {
+  OrchestratorPhase,
+  AgentStepStatus,
+  CheckpointOutcome,
+  validateCheckpointPayload,
+  isValidOrchestratorTransition,
+  isTerminalCheckpointOutcome,
+  isDegradedAgentStep,
+  isTerminalAgentStepStatus,
+} from './conversation-checkpoint.js';
+
+export type { DataMinimizationResult } from './conversation-checkpoint.js';

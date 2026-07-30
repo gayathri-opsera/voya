@@ -42,3 +42,32 @@ export {
   testSessionRetentionPolicy,
   testAuditRetentionPolicy,
 } from './core-domain-fixtures.js';
+
+export {
+  // Owner and session references
+  CHECKPOINT_OWNER_A,
+  CHECKPOINT_OWNER_B,
+  SESSION_REF_PARIS,
+  SESSION_REF_TOKYO,
+  // Normalized trip constraints
+  parisConstraints,
+  partialTokyoConstraints,
+  // Clarification fields
+  pendingClarificationFields,
+  resolvedClarificationFields,
+  // Safe tool summaries
+  accommodationSearchSummary,
+  diningSearchSummary,
+  // Create checkpoint inputs
+  pendingClarificationCheckpointInput,
+  intentCompleteCheckpointInput,
+  expiredCheckpointInput,
+  // Version conflict helper
+  makeStaleVersionUpdateInput,
+  // Degraded agent step scenario
+  degradedDiningStep,
+  // Sensitive payload fixtures for data-minimization tests
+  sensitivePayloadFixture,
+  nestedSensitivePayloadFixture,
+  cleanConstraintsPayload,
+} from './conversation-checkpoint-fixtures.js';
