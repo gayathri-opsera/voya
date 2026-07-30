@@ -1,5 +1,33 @@
+# Forge
 .forge-commit-ready
 .forge/project-id
 .cursor/hooks.json
 .cursor/hooks/
 .cursor/rules/forge-workflow.mdc
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage
+coverage/
+
+# Turbo
+.turbo/
