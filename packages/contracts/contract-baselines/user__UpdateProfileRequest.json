@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "dateOfBirth": {
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "type": "string"
+    },
+    "firstName": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "lastName": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "nationality": {
+      "pattern": "^[A-Z]{2}$",
+      "type": "string"
+    },
+    "passportExpiryDate": {
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "type": "string"
+    },
+    "passportNumber": {
+      "pattern": "^[A-Z0-9]{6,20}$",
+      "type": "string"
+    },
+    "phoneNumber": {
+      "pattern": "^\\+?[0-9\\s\\-().]{7,20}$",
+      "type": "string"
+    }
+  },
+  "type": "object"
+}
