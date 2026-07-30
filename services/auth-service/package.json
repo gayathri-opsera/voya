@@ -6,7 +6,13 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "dev": "tsx watch src/index.ts"
+    "test:watch": "vitest",
+    "dev": "tsx watch src/index.ts",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@travel/contracts": "workspace:*",
@@ -20,5 +26,9 @@
     "supertest": "^7.1.0",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
+  },
+  "optionalDependencies": {
+    "@prisma/client": "^6.7.0",
+    "prisma": "^6.7.0"
   }
 }
