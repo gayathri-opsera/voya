@@ -20,6 +20,36 @@
  * Types are always derived with z.infer — never hand-written.
  */
 
+// ─── Errors ───────────────────────────────────────────────────────────────────
+export {
+  ErrorCode,
+  HTTP_STATUS_MAP,
+  resolveHttpStatus,
+  ErrorDetailSchema,
+  ErrorEnvelopeSchema,
+  AppError,
+  validationFailed,
+  unauthenticated,
+  forbidden,
+  notFound,
+  conflict,
+  lifecycleConflict,
+  duplicateEmail,
+  supplierRejected,
+  rateLimited,
+  supplierUnavailable,
+  supplierTimeout,
+  internalError,
+  RESTRICTED_FIELDS,
+  serialiseError,
+} from "./errors/index.js";
+export type {
+  AllowedHttpStatus,
+  ErrorDetail,
+  ErrorEnvelope,
+  SerialiseResult,
+} from "./errors/index.js";
+
 // ─── Common primitives ────────────────────────────────────────────────────────
 export {
   iataCode,

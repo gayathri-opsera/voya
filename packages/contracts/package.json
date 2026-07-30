@@ -42,6 +42,11 @@
       "import": "./dist/events/index.js",
       "require": "./dist/events/index.cjs",
       "types": "./dist/events/index.d.ts"
+    },
+    "./errors": {
+      "import": "./dist/errors/index.js",
+      "require": "./dist/errors/index.cjs",
+      "types": "./dist/errors/index.d.ts"
     }
   },
   "files": ["dist"],
