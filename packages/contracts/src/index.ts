@@ -163,3 +163,164 @@ export type {
   ApiError,
   ApiErrorParseResult,
 } from './common/api-error.js';
+
+// ---------------------------------------------------------------------------
+// Governance: data classification registry — schema, types, registry, helpers
+// ---------------------------------------------------------------------------
+
+export {
+  DataCategoryKeyEnum,
+  DataCategoryKey,
+  DataCategoryEntrySchema,
+  DATA_CATEGORY_REGISTRY,
+  lookupDataCategory,
+  validateDataCategoryEntry,
+} from './governance/data-classification.js';
+
+export type {
+  DataCategoryKey as DataCategoryKeyType,
+  DataCategoryEntry,
+  DataCategoryValidationError,
+} from './governance/data-classification.js';
+
+// ---------------------------------------------------------------------------
+// Governance: retention policy registry — schema, types, registry, helpers
+// ---------------------------------------------------------------------------
+
+export {
+  RetentionApprovalStatusEnum,
+  RetentionApprovalStatus,
+  RetentionPurgeActionEnum,
+  RetentionPurgeAction,
+  RetentionPolicySchema,
+  RETENTION_POLICY_REGISTRY,
+  parseRetentionPolicy,
+  lookupRetentionPolicy,
+} from './governance/retention-policy.js';
+
+export type {
+  RetentionApprovalStatus as RetentionApprovalStatusType,
+  RetentionPurgeAction as RetentionPurgeActionType,
+  RetentionPolicy,
+  RetentionPolicyParseResult,
+} from './governance/retention-policy.js';
+
+// ---------------------------------------------------------------------------
+// Governance: prompt safety validation — schema, types, helpers, error class
+// ---------------------------------------------------------------------------
+
+export {
+  GovernanceErrorSchema,
+  validatePromptCategories,
+  isPromptSafe,
+  assertPromptSafe,
+  PromptSafetyViolationError,
+} from './governance/prompt-safety.js';
+
+export type {
+  GovernanceError,
+  CategoryAnnotation,
+} from './governance/prompt-safety.js';
+
+// ---------------------------------------------------------------------------
+// Supplier: capability manifest — schema, types, enums, registry helpers
+// ---------------------------------------------------------------------------
+
+export {
+  CancellationSemanticsEnum,
+  CancellationSemantics,
+  RefundSemanticsEnum,
+  RefundSemantics,
+  SupplierOperationEnum,
+  SupplierOperation,
+  SupplierCertificationStatusEnum,
+  SupplierCertificationStatus,
+  FixtureEvidenceSchema,
+  SupplierCapabilityManifestSchema,
+  validateManifest,
+  isExemptPublicLandmark,
+} from './supplier/capability-manifest.js';
+
+export type {
+  CancellationSemantics as CancellationSemanticsType,
+  RefundSemantics as RefundSemanticsType,
+  SupplierOperation as SupplierOperationType,
+  SupplierCertificationStatus as SupplierCertificationStatusType,
+  FixtureEvidence,
+  SupplierCapabilityManifest,
+  ManifestValidationError,
+} from './supplier/capability-manifest.js';
+
+// ---------------------------------------------------------------------------
+// Supplier: freshness window helpers — types and functions
+// ---------------------------------------------------------------------------
+
+export {
+  getAvailabilityMaxAgeSeconds,
+  getRateMaxAgeSeconds,
+  isAvailabilityStale,
+  isRateStale,
+  evaluateFreshness,
+} from './supplier/freshness-window.js';
+
+export type {
+  FreshnessGrade,
+  FreshnessWindowInput,
+} from './supplier/freshness-window.js';
+
+// ---------------------------------------------------------------------------
+// Audit: actor model, event schema, redaction — schemas, types, helpers
+// ---------------------------------------------------------------------------
+
+export {
+  AuditActorTypeEnum,
+  AuditActorType,
+  AuditActorSchema,
+  ResourceRefSchema,
+  RedactionMetaSchema,
+  AuditEventSchema,
+  RESTRICTED_FIELD_NAMES,
+  RESOURCE_TYPES,
+  parseAuditEvent,
+  validateEventDetails,
+} from './audit/audit-event.js';
+
+export type {
+  AuditActorType as AuditActorTypeType,
+  AuditActor,
+  ResourceType,
+  ResourceRef,
+  RedactionMeta,
+  AuditEvent,
+} from './audit/audit-event.js';
+
+// ---------------------------------------------------------------------------
+// Audit: event type registry — metadata, categories, helpers
+// ---------------------------------------------------------------------------
+
+export {
+  AUDIT_EVENT_CATEGORY,
+  AUDIT_EVENT_TYPE_REGISTRY,
+  getAuditEventTypeMetadata,
+  getHighSeverityEventTypes,
+  getEventTypesByCategory,
+} from './audit/audit-event-types.js';
+
+export type {
+  AuditEventCategory,
+  AuditEventTypeMetadata,
+} from './audit/audit-event-types.js';
+
+// ---------------------------------------------------------------------------
+// Audit: canonicalization — deterministic hash input helpers
+// ---------------------------------------------------------------------------
+
+export {
+  CanonicalizationError,
+  canonicalizeObject,
+  buildAuditHashInput,
+} from './audit/canonicalize.js';
+
+export type {
+  AuditEventHashInputFields,
+} from './audit/canonicalize.js';

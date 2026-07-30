@@ -1,0 +1,811 @@
+// Voya — Core Persistence Schema
+// Managed by Prisma Migrate. Do not hand-edit generated sections.
+//
+// All aggregate roots carry:
+//   - UUID primary key (database-generated)
+//   - ownerRef linking to traveller_profile (where applicable)
+//   - createdAt / updatedAt
+//   - dataClassification for retention and access-control policy
+//
+// Monetary values are stored as integer minor units (cents/pence).
+// Raw payment card numbers, Bonvoy account numbers, and passport numbers
+// must never appear in this schema; use tokenised references only.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums — kept in sync with @voya/contracts where overlap exists
+// ---------------------------------------------------------------------------
+
+enum InventoryDomain {
+  ACCOMMODATION
+  ACTIVITIES
+  DINING
+  FLIGHTS
+  TRANSPORT
+  WEATHER_ADVISORY
+}
+
+enum BookingSource {
+  HVMI
+  MARRIOTT_BRAND
+  BONVOY_TOURS_AND_ACTIVITIES
+  AMADEUS_GDS
+  MUNICIPAL_PUBLIC
+}
+
+enum SourceClassification {
+  MARRIOTT_OWNED
+  MARRIOTT_PARTNERED
+  EXEMPT_PUBLIC
+}
+
+enum SupplierBookability {
+  FULLY_BOOKABLE
+  DEEP_LINK_ONLY
+  UNAVAILABLE
+}
+
+// Persistence-layer receipt outcomes include FAIL in addition to the
+// API-contract outcomes (PASS / BLOCKED / STALE) in @voya/contracts.
+enum ReceiptOutcome {
+  PASS
+  FAIL
+  BLOCKED
+  STALE
+}
+
+enum ItineraryStatus {
+  DRAFT
+  PENDING_VERIFICATION
+  VERIFIED
+  PRESENTED
+  EXPIRED
+  CANCELLED
+}
+
+enum DataClassificationTier {
+  PUBLIC
+  INTERNAL
+  CONFIDENTIAL
+  RESTRICTED
+}
+
+enum AuditEventType {
+  SOURCING_ORDER
+  BRAND_FALLBACK_DISCLOSURE
+  SUPPLIER_EXCLUSION
+  MANIFEST_EXCLUSION
+  SAFETY_GATE_DECISION
+  PROMPT_SAFETY_REJECTION
+  RECEIPT_ISSUED
+  RECEIPT_STALE_BLOCKED
+  RECEIPT_BLOCKED
+  LOYALTY_SIMULATED_DEBIT
+  LOYALTY_SIMULATED_QUOTE
+  LOYALTY_SIMULATED_HOLD
+  LOYALTY_SIMULATED_COMMIT
+  LOYALTY_SIMULATED_REVERSAL
+  CHECKOUT_AUTHORISATION_TAKEN
+  CHECKOUT_COMPENSATED
+  CHECKOUT_STATE_TRANSITION
+  ITINERARY_PRESENTED
+  AUTHENTICATION_EVENT
+  RETENTION_DECISION
+  ADMIN_APPROVAL_EVIDENCE
+}
+
+enum AuditActorType {
+  TRAVELLER_AUTHENTICATED
+  TRAVELLER_GUEST
+  SERVICE_PRINCIPAL
+  AGENT_PRINCIPAL
+  CUSTOMER_CARE_OPERATOR
+  LOYALTY_ADMINISTRATOR
+  MERCHANDISER
+  FRAUD_ANALYST
+  SYSTEM_PROCESS
+}
+
+enum TravellerIdentityType {
+  BONVOY_AUTHENTICATED
+  GUEST_TOKEN
+}
+
+enum PathMode {
+  PATH_A
+  PATH_B
+}
+
+enum CancellationSemantics {
+  FULL_REFUND_72H
+  FULL_REFUND_24H
+  PARTIAL_REFUND
+  NON_REFUNDABLE
+  NOT_APPLICABLE
+}
+
+enum RefundSemantics {
+  AUTOMATIC_PLATFORM_REVERSAL
+  SUPPLIER_INITIATED
+  MANUAL_RECONCILIATION
+  NOT_APPLICABLE
+}
+
+enum SupplierCertificationStatus {
+  CERTIFIED
+  UNCERTIFIED
+  PENDING
+}
+
+enum RetentionPurgeAction {
+  DELETE
+  ANONYMIZE
+  ARCHIVE
+}
+
+enum RetentionApprovalStatus {
+  PROVISIONAL
+  APPROVED
+}
+
+enum OrchestratorPhase {
+  INTENT_CAPTURE
+  CLARIFICATION
+  SOURCING
+  VERIFICATION
+  PRESENTING
+  COMPLETE
+  EXPIRED
+}
+
+enum AgentStepStatus {
+  PENDING
+  RUNNING
+  COMPLETE
+  DEGRADED
+  FAILED
+  SKIPPED
+}
+
+enum CheckpointOutcome {
+  ACTIVE
+  INTENT_COMPLETE
+  DEGRADED
+  EXPIRED
+}
+
+// ---------------------------------------------------------------------------
+// TravellerProfile
+// Owns all traveller-linked aggregates. ownerRef is a tokenised reference
+// (Bonvoy token or guest-session token) — never a raw Bonvoy account number.
+// ---------------------------------------------------------------------------
+
+model TravellerProfile {
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerRef           String                 @unique
+  identityType       TravellerIdentityType
+  dataClassification DataClassificationTier @default(CONFIDENTIAL)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  sessions     TravellerSession[]
+  tripIntents  TripIntent[]
+  itineraries  Itinerary[]
+  auditRecords AuditRecord[]
+
+  @@map("traveller_profile")
+}
+
+// ---------------------------------------------------------------------------
+// TravellerSession
+// Short-lived session scoped to a single path mode. Expires independently of
+// the profile. Used for rate limiting and session-level data retention.
+// ---------------------------------------------------------------------------
+
+model TravellerSession {
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  travellerProfileId String                 @db.Uuid
+  pathMode           PathMode
+  expiresAt          DateTime
+  dataClassification DataClassificationTier @default(INTERNAL)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  travellerProfile TravellerProfile @relation(fields: [travellerProfileId], references: [id])
+  tripIntents      TripIntent[]
+
+  @@index([travellerProfileId])
+  @@map("traveller_session")
+}
+
+// ---------------------------------------------------------------------------
+// TripIntent
+// Parsed traveller constraints from either path. rawConstraintsJson holds the
+// tokenised TripConstraints object — personal data never enters this column.
+// destinationToken is a normalised identifier; it is NOT a raw address or city
+// string supplied directly by the user.
+// ---------------------------------------------------------------------------
+
+model TripIntent {
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  travellerProfileId String                 @db.Uuid
+  sessionId          String?                @db.Uuid
+  pathMode           PathMode
+  rawConstraintsJson Json
+  destinationToken   String
+  checkInDate        DateTime               @db.Date
+  checkOutDate       DateTime               @db.Date
+  partySize          Int
+  budgetBandCode     String?
+  dataClassification DataClassificationTier @default(INTERNAL)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  travellerProfile TravellerProfile  @relation(fields: [travellerProfileId], references: [id])
+  session          TravellerSession? @relation(fields: [sessionId], references: [id])
+  itineraries      Itinerary[]
+
+  @@index([travellerProfileId])
+  @@map("trip_intent")
+}
+
+// ---------------------------------------------------------------------------
+// Itinerary
+// An assembled plan linked to a TripIntent. version increments on every
+// re-generation; receipts reference the version they evaluated so historical
+// evidence is never overwritten.
+// ---------------------------------------------------------------------------
+
+model Itinerary {
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  travellerProfileId String                 @db.Uuid
+  tripIntentId       String                 @db.Uuid
+  version            Int                    @default(1)
+  status             ItineraryStatus        @default(DRAFT)
+  pathMode           PathMode
+  dataClassification DataClassificationTier @default(INTERNAL)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  travellerProfile TravellerProfile        @relation(fields: [travellerProfileId], references: [id])
+  tripIntent       TripIntent              @relation(fields: [tripIntentId], references: [id])
+  days             ItineraryDay[]
+  lineItems        ItineraryLineItem[]
+  receipts         TripConfidenceReceipt[]
+  auditRecords     AuditRecord[]
+
+  @@index([travellerProfileId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("itinerary")
+}
+
+// ---------------------------------------------------------------------------
+// ItineraryDay
+// Groups line items by calendar day within an itinerary.
+// ---------------------------------------------------------------------------
+
+model ItineraryDay {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  itineraryId String   @db.Uuid
+  dayIndex    Int
+  date        DateTime @db.Date
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  itinerary Itinerary          @relation(fields: [itineraryId], references: [id])
+  lineItems ItineraryLineItem[]
+
+  @@index([itineraryId])
+  @@map("itinerary_day")
+}
+
+// ---------------------------------------------------------------------------
+// SourceProvenance
+// Immutable record of where a line item's data came from and when.
+// Every ItineraryLineItem must have exactly one SourceProvenance (enforced by
+// the @unique constraint on sourceProvenanceId in ItineraryLineItem).
+// ---------------------------------------------------------------------------
+
+model SourceProvenance {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  supplierId           String
+  sourceRef            String
+  bookingSource        BookingSource
+  sourceClassification SourceClassification
+  fetchedAt            DateTime
+  dataClassification   DataClassificationTier @default(INTERNAL)
+  createdAt            DateTime               @default(now())
+
+  lineItem ItineraryLineItem?
+
+  @@index([sourceRef])
+  @@index([bookingSource])
+  @@map("source_provenance")
+}
+
+// ---------------------------------------------------------------------------
+// ItineraryLineItem
+// A single sourced item within an itinerary. sourceProvenanceId is mandatory
+// and unique — an orphaned line item (without provenance) cannot be persisted,
+// enforcing the zero-hallucinated-inventory audit requirement.
+//
+// Monetary values use integer minor units (e.g. 15000 = USD 150.00).
+// pointsAmount is the Bonvoy pseudo-redemption unit; it is labelled simulated
+// in every audit record and never debits a real balance.
+// ---------------------------------------------------------------------------
+
+model ItineraryLineItem {
+  id                         String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  itineraryId                String                 @db.Uuid
+  itineraryDayId             String?                @db.Uuid
+  sourceProvenanceId         String                 @unique @db.Uuid
+  domain                     InventoryDomain
+  supplierRef                String
+  displayNameSnapshot        String
+  priceAmountMinorUnits      Int?
+  priceCurrencyCode          String?
+  pointsAmount               Int?
+  availabilityDataAgeSeconds Int?
+  rateDataAgeSeconds         Int?
+  dataClassification         DataClassificationTier @default(INTERNAL)
+  createdAt                  DateTime               @default(now())
+  updatedAt                  DateTime               @updatedAt
+
+  itinerary        Itinerary                      @relation(fields: [itineraryId], references: [id])
+  itineraryDay     ItineraryDay?                  @relation(fields: [itineraryDayId], references: [id])
+  sourceProvenance SourceProvenance               @relation(fields: [sourceProvenanceId], references: [id])
+  receiptLineItems TripConfidenceReceiptLineItem[]
+
+  @@index([itineraryId])
+  @@index([domain])
+  @@map("itinerary_line_item")
+}
+
+// ---------------------------------------------------------------------------
+// TripConfidenceReceipt
+// Deterministic feasibility + provenance + freshness summary that gates
+// presentation and checkout. New rows are appended on re-generation;
+// prior receipt rows are never overwritten. itineraryVersion links the receipt
+// to the exact itinerary state that was evaluated.
+// ---------------------------------------------------------------------------
+
+model TripConfidenceReceipt {
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  itineraryId        String                 @db.Uuid
+  itineraryVersion   Int
+  outcome            ReceiptOutcome
+  feasibilityPassed  Boolean
+  freshnessGrade     String
+  blockedReasonCode  String?
+  evaluatedAt        DateTime
+  dataClassification DataClassificationTier @default(INTERNAL)
+  createdAt          DateTime               @default(now())
+
+  itinerary Itinerary                      @relation(fields: [itineraryId], references: [id])
+  lineItems TripConfidenceReceiptLineItem[]
+
+  @@index([itineraryId])
+  @@index([outcome])
+  @@index([createdAt])
+  @@map("trip_confidence_receipt")
+}
+
+// ---------------------------------------------------------------------------
+// TripConfidenceReceiptLineItem
+// Per-line-item freshness evidence captured at receipt evaluation time.
+// Immutable — never updated after creation.
+// ---------------------------------------------------------------------------
+
+model TripConfidenceReceiptLineItem {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  receiptId           String   @db.Uuid
+  lineItemId          String   @db.Uuid
+  freshnessGrade      String
+  isAvailabilityStale Boolean
+  isRateStale         Boolean
+  createdAt           DateTime @default(now())
+
+  receipt  TripConfidenceReceipt @relation(fields: [receiptId], references: [id])
+  lineItem ItineraryLineItem      @relation(fields: [lineItemId], references: [id])
+
+  @@index([receiptId])
+  @@map("trip_confidence_receipt_line_item")
+}
+
+// ---------------------------------------------------------------------------
+// SupplierCapabilityManifest
+// Persisted registry entry for each certified supplier connector.
+// Mirrors the @voya/contracts SupplierCapabilityManifest schema; this row is
+// the source of truth for sourcing filters, manifest registry reads, and
+// receipt freshness window lookups.
+// fixtureEvidenceRef is a stable reference to the fixture record — never a
+// raw sandbox credential or execution log.
+// ---------------------------------------------------------------------------
+
+model SupplierCapabilityManifest {
+  id                                String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  supplierId                        String                      @unique
+  displayName                       String
+  domain                            InventoryDomain
+  sourceClassification              SourceClassification
+  bookabilityMode                   SupplierBookability
+  availabilityRefreshLatencySeconds Int
+  rateRefreshLatencySeconds         Int?
+  isPriced                          Boolean
+  cancellationSemantics             CancellationSemantics
+  refundSemantics                   RefundSemantics
+  certificationStatus               SupplierCertificationStatus
+  fixtureEvidenceRef                String?
+  manifestVersion                   String
+  lastReviewedAt                    DateTime
+  reviewedBy                        String
+  dataClassification                DataClassificationTier      @default(INTERNAL)
+  createdAt                         DateTime                    @default(now())
+  updatedAt                         DateTime                    @updatedAt
+
+  @@index([domain])
+  @@index([certificationStatus])
+  @@map("supplier_capability_manifest")
+}
+
+// ---------------------------------------------------------------------------
+// AuditRecord
+// Append-only ledger entry. Never updated. payloadJson contains only
+// non-personal event context — no PII, no card data, no Bonvoy numbers.
+// ---------------------------------------------------------------------------
+
+model AuditRecord {
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventType          AuditEventType
+  travellerProfileId String?                @db.Uuid
+  itineraryId        String?                @db.Uuid
+  sessionRef         String?
+  supplierId         String?
+  payloadJson        Json
+  pathMode           PathMode?
+  dataClassification DataClassificationTier @default(INTERNAL)
+  createdAt          DateTime               @default(now())
+
+  travellerProfile TravellerProfile? @relation(fields: [travellerProfileId], references: [id])
+  itinerary        Itinerary?        @relation(fields: [itineraryId], references: [id])
+
+  @@index([travellerProfileId])
+  @@index([itineraryId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("audit_record")
+}
+
+// ---------------------------------------------------------------------------
+// RetentionPolicyMetadata
+// Persisted registry of data retention rules. All rows start PROVISIONAL;
+// APPROVED requires explicit sign-off (out of scope for this story).
+// purge jobs are implemented separately — this table is the policy contract.
+// ---------------------------------------------------------------------------
+
+model RetentionPolicyMetadata {
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  policyKey          String                 @unique
+  targetTable        String
+  targetColumn       String?
+  triggerEvent       String
+  retentionDays      Int
+  purgeAction        RetentionPurgeAction
+  approvalStatus     RetentionApprovalStatus
+  notes              String?
+  dataClassification DataClassificationTier @default(INTERNAL)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@map("retention_policy_metadata")
+}
+
+// ---------------------------------------------------------------------------
+// AssistantConversationCheckpoint
+// Versioned checkpoint for Path B orchestrator sessions. Stores normalized,
+// non-PII trip constraints, pending clarification fields, orchestrator phase,
+// per-agent status summary, and safe tool summaries. Raw prompt transcripts,
+// traveller PII, and payment data are never persisted here.
+// ---------------------------------------------------------------------------
+
+model AssistantConversationCheckpoint {
+  id                           String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionRef                   String
+  ownerRef                     String
+  checkpointVersion            Int                    @default(1)
+  orchestratorPhase            OrchestratorPhase      @default(INTENT_CAPTURE)
+  outcome                      CheckpointOutcome      @default(ACTIVE)
+  tripConstraintsJson          Json?
+  pendingClarificationJson     Json?
+  agentStatusSummaryJson       Json?
+  safeToolSummariesJson        Json?
+  naturalLanguageIntentSummary String?
+  expiresAt                    DateTime?
+  dataClassification           DataClassificationTier @default(INTERNAL)
+  createdAt                    DateTime               @default(now())
+  updatedAt                    DateTime               @updatedAt
+
+  agentSteps AssistantAgentStep[]
+
+  @@index([ownerRef, sessionRef])
+  @@index([expiresAt])
+  @@index([checkpointVersion])
+  @@map("assistant_conversation_checkpoint")
+}
+
+// ---------------------------------------------------------------------------
+// AssistantAgentStep
+// Per-domain agent step result within a conversation checkpoint.
+// DEGRADED status persists distinctly from FAILED so the UI progress spine
+// can show a degraded state rather than silently omitting the domain.
+// safeOutputSummaryJson holds only model-generated summary text, never raw
+// tool output, supplier credentials, or traveller PII.
+// ---------------------------------------------------------------------------
+
+model AssistantAgentStep {
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  checkpointId          String                 @db.Uuid
+  domain                InventoryDomain
+  status                AgentStepStatus        @default(PENDING)
+  stepIndex             Int
+  safeOutputSummaryJson Json?
+  degradedReasonCode    String?
+  dataClassification    DataClassificationTier @default(INTERNAL)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  checkpoint AssistantConversationCheckpoint @relation(fields: [checkpointId], references: [id])
+
+  @@index([checkpointId])
+  @@index([status])
+  @@map("assistant_agent_step")
+}
+
+// ---------------------------------------------------------------------------
+// AuditLedger
+// Append-only audit ledger with structured, redacted payloads and a
+// canonical integrity hash. No UPDATE or DELETE operations are supported
+// by application contract. The canonical hash is produced from deterministically
+// ordered event identity fields (see @voya/contracts canonicalize.ts).
+// actorRef and resourceRef are tokenized references — never raw PII.
+// ---------------------------------------------------------------------------
+
+model AuditLedger {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventType            AuditEventType
+  actorType            AuditActorType
+  actorRef             String
+  resourceType         String
+  resourceRef          String
+  occurredAt           DateTime
+  correlationId        String
+  classificationTier   DataClassificationTier @default(INTERNAL)
+  redactedPayloadJson  Json
+  canonicalHash        String
+  createdAt            DateTime               @default(now())
+
+  @@index([eventType])
+  @@index([resourceRef])
+  @@index([actorRef])
+  @@index([occurredAt])
+  @@index([correlationId])
+  @@map("audit_ledger")
+}
+
+// ---------------------------------------------------------------------------
+// Destination
+// Normalised destination record used as a grouping key for collections and
+// home references. slug is the stable public identifier used in browse URLs.
+// heroImageRef and heroImageAltText are metadata references only — no image
+// bytes are stored in the database.
+// ---------------------------------------------------------------------------
+
+model Destination {
+  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug             String                 @unique
+  displayName      String
+  regionName       String?
+  countryCode      String?
+  heroImageRef     String?
+  heroImageAltText String?
+  isActive         Boolean                @default(true)
+  sortOrder        Int                    @default(0)
+  contentVersion   Int                    @default(1)
+  dataClassification DataClassificationTier @default(PUBLIC)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  homeReferences HomeInventoryReference[]
+  collections    CuratedCollection[]
+
+  @@index([slug])
+  @@index([isActive, sortOrder])
+  @@map("destination")
+}
+
+// ---------------------------------------------------------------------------
+// CuratedCollection
+// Marriott-inspired editorial collection (Beachfront Rentals, Ski-In Ski-Out
+// Chalets, etc.). slug is the stable public identifier. isActive controls
+// public visibility. contentVersion enables cache-safe ETag generation.
+// heroImageRef is a metadata reference only — no image bytes stored here.
+// ---------------------------------------------------------------------------
+
+model CuratedCollection {
+  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug             String                 @unique
+  displayName      String
+  editorialEyebrow String?
+  description      String?
+  heroImageRef     String?
+  heroImageAltText String?
+  isActive         Boolean                @default(true)
+  sortOrder        Int                    @default(0)
+  contentVersion   Int                    @default(1)
+  destinationId    String?                @db.Uuid
+  dataClassification DataClassificationTier @default(PUBLIC)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  destination  Destination?          @relation(fields: [destinationId], references: [id])
+  homes        CollectionHome[]
+  interestTags CollectionInterestTag[]
+
+  @@index([slug])
+  @@index([isActive, sortOrder])
+  @@map("curated_collection")
+}
+
+// ---------------------------------------------------------------------------
+// HomeInventoryReference
+// Canonical source reference to an HVMI (or other Marriott-partnered) home.
+// This is NOT a live listing replica — it holds the stable sourceRef used to
+// request live availability and rates from the connector. heroImageRef is a
+// metadata reference only.
+// ---------------------------------------------------------------------------
+
+model HomeInventoryReference {
+  id                  String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceRef           String                 @unique
+  supplierId          String
+  bookingSource       BookingSource
+  displayNameSnapshot String
+  destinationId       String?                @db.Uuid
+  destinationSlug     String?
+  heroImageRef        String?
+  heroImageAltText    String?
+  isActive            Boolean                @default(true)
+  dataClassification  DataClassificationTier @default(INTERNAL)
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+
+  destination  Destination?           @relation(fields: [destinationId], references: [id])
+  collections  CollectionHome[]
+  savedHomes   SavedHome[]
+  interestTags HomeInterestTag[]
+
+  @@index([sourceRef])
+  @@index([destinationId])
+  @@index([isActive])
+  @@map("home_inventory_reference")
+}
+
+// ---------------------------------------------------------------------------
+// CollectionHome
+// Membership link between a CuratedCollection and a HomeInventoryReference.
+// sortOrder controls display order within the collection.
+// The unique constraint prevents duplicate membership rows.
+// ---------------------------------------------------------------------------
+
+model CollectionHome {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  collectionId String   @db.Uuid
+  homeRefId    String   @db.Uuid
+  sortOrder    Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  collection CuratedCollection      @relation(fields: [collectionId], references: [id])
+  homeRef    HomeInventoryReference @relation(fields: [homeRefId], references: [id])
+
+  @@unique([collectionId, homeRefId])
+  @@index([collectionId, sortOrder])
+  @@map("collection_home")
+}
+
+// ---------------------------------------------------------------------------
+// InterestTag
+// Normalised interest tag used across collections and home references.
+// tagKey is the stable machine identifier (BEACHFRONT, SKI_IN_SKI_OUT, etc.).
+// displayLabel is the user-facing string.
+// ---------------------------------------------------------------------------
+
+model InterestTag {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tagKey       String   @unique
+  displayLabel String
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  collections CollectionInterestTag[]
+  homes       HomeInterestTag[]
+
+  @@index([tagKey])
+  @@map("interest_tag")
+}
+
+// ---------------------------------------------------------------------------
+// CollectionInterestTag
+// Many-to-many between CuratedCollection and InterestTag.
+// ---------------------------------------------------------------------------
+
+model CollectionInterestTag {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  collectionId String   @db.Uuid
+  tagId        String   @db.Uuid
+  createdAt    DateTime @default(now())
+
+  collection CuratedCollection @relation(fields: [collectionId], references: [id])
+  tag        InterestTag       @relation(fields: [tagId], references: [id])
+
+  @@unique([collectionId, tagId])
+  @@index([collectionId])
+  @@map("collection_interest_tag")
+}
+
+// ---------------------------------------------------------------------------
+// HomeInterestTag
+// Many-to-many between HomeInventoryReference and InterestTag.
+// ---------------------------------------------------------------------------
+
+model HomeInterestTag {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  homeRefId String   @db.Uuid
+  tagId     String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  homeRef HomeInventoryReference @relation(fields: [homeRefId], references: [id])
+  tag     InterestTag            @relation(fields: [tagId], references: [id])
+
+  @@unique([homeRefId, tagId])
+  @@index([homeRefId])
+  @@map("home_interest_tag")
+}
+
+// ---------------------------------------------------------------------------
+// SavedHome
+// Owner-scoped link from a traveller to a HomeInventoryReference.
+// The unique constraint on (ownerRef, homeRefId) enforces idempotency —
+// duplicate heart actions do not create duplicate rows or reset savedAt.
+// ownerRef uses the same tokenized pattern as TravellerProfile.ownerRef.
+// notes must not contain PII (validated at the repository layer).
+// ---------------------------------------------------------------------------
+
+model SavedHome {
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerRef           String
+  homeRefId          String                 @db.Uuid
+  savedAt            DateTime               @default(now())
+  notes              String?
+  dataClassification DataClassificationTier @default(INTERNAL)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  homeRef HomeInventoryReference @relation(fields: [homeRefId], references: [id])
+
+  @@unique([ownerRef, homeRefId])
+  @@index([ownerRef])
+  @@index([homeRefId])
+  @@map("saved_home")
+}
