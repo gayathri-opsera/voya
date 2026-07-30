@@ -132,6 +132,25 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
+  packages/queue:
+    dependencies:
+      '@travel/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@travel/observability':
+        specifier: workspace:*
+        version: link:../observability
+    devDependencies:
+      '@types/node':
+        specifier: ^20.17.0
+        version: 20.19.43
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 2.1.9(@types/node@20.19.43)(supports-color@8.1.1)
+
   packages/shared:
     dependencies:
       '@travel/contracts':

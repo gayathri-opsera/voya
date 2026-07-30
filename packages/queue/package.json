@@ -1,0 +1,23 @@
+{
+  "name": "@travel/queue",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Queue port with RabbitMQ (local/staging) and SQS (production) adapters",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@travel/contracts": "workspace:*",
+    "@travel/observability": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
