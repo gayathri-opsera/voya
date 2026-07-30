@@ -4,6 +4,7 @@ import request from "supertest";
 import { createAuthRouter } from "../../src/routes/auth.js";
 import type { RegistrationService } from "../../src/services/registrationService.js";
 import { PolicyViolationError } from "../../src/services/registrationService.js";
+import type { LoginService } from "../../src/services/loginService.js";
 
 function makeService(overrides: Partial<RegistrationService> = {}): RegistrationService {
   return {
@@ -13,10 +14,23 @@ function makeService(overrides: Partial<RegistrationService> = {}): Registration
   } as unknown as RegistrationService;
 }
 
-function buildApp(svc: RegistrationService): Express {
+function makeLoginService(overrides: Partial<LoginService> = {}): LoginService {
+  return {
+    login: vi.fn().mockResolvedValue({
+      outcome: "success",
+      accessToken: "fake.jwt.token",
+      tokenType: "Bearer",
+      expiresIn: 900,
+      user: { id: "u1", email: "user@example.com", displayName: null, roles: ["user"], emailVerified: true },
+    }),
+    ...overrides,
+  } as unknown as LoginService;
+}
+
+function buildApp(svc: RegistrationService, loginSvc?: LoginService): Express {
   const app = express();
   app.use(express.json());
-  app.use("/auth", createAuthRouter(svc));
+  app.use("/auth", createAuthRouter(svc, loginSvc));
   return app;
 }
 
@@ -144,5 +158,100 @@ describe("POST /auth/resend-verification", () => {
       .send({ email: "unknown@example.com" });
 
     expect(res.status).toBe(202);
+  });
+});
+
+describe("POST /auth/login", () => {
+  let svc: RegistrationService;
+  let loginSvc: LoginService;
+  let app: Express;
+
+  beforeEach(() => {
+    svc = makeService();
+    loginSvc = makeLoginService();
+    app = buildApp(svc, loginSvc);
+  });
+
+  it("returns 200 with access token on success", async () => {
+    const res = await request(app)
+      .post("/auth/login")
+      .send({ email: "user@example.com", password: "SecurePass123!" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.accessToken).toBe("fake.jwt.token");
+    expect(res.body.tokenType).toBe("Bearer");
+    expect(res.body.user.id).toBe("u1");
+  });
+
+  it("returns 401 for invalid credentials", async () => {
+    loginSvc = makeLoginService({
+      login: vi.fn().mockResolvedValue({ outcome: "invalid_credentials" }),
+    });
+    app = buildApp(svc, loginSvc);
+
+    const res = await request(app)
+      .post("/auth/login")
+      .send({ email: "user@example.com", password: "wrong" });
+
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe("invalid_credentials");
+  });
+
+  it("returns 423 for locked account", async () => {
+    loginSvc = makeLoginService({
+      login: vi.fn().mockResolvedValue({ outcome: "account_locked", retryAfterSeconds: 300 }),
+    });
+    app = buildApp(svc, loginSvc);
+
+    const res = await request(app)
+      .post("/auth/login")
+      .send({ email: "user@example.com", password: "SecurePass123!" });
+
+    expect(res.status).toBe(423);
+    expect(res.body.error.retryAfterSeconds).toBe(300);
+  });
+
+  it("returns 403 for unverified email", async () => {
+    loginSvc = makeLoginService({
+      login: vi.fn().mockResolvedValue({ outcome: "email_not_verified" }),
+    });
+    app = buildApp(svc, loginSvc);
+
+    const res = await request(app)
+      .post("/auth/login")
+      .send({ email: "user@example.com", password: "SecurePass123!" });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe("email_not_verified");
+  });
+
+  it("returns 403 for disabled account", async () => {
+    loginSvc = makeLoginService({
+      login: vi.fn().mockResolvedValue({ outcome: "account_disabled" }),
+    });
+    app = buildApp(svc, loginSvc);
+
+    const res = await request(app)
+      .post("/auth/login")
+      .send({ email: "user@example.com", password: "SecurePass123!" });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe("account_disabled");
+  });
+
+  it("returns 400 for invalid email", async () => {
+    const res = await request(app)
+      .post("/auth/login")
+      .send({ email: "not-an-email", password: "SecurePass123!" });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 for unknown fields", async () => {
+    const res = await request(app)
+      .post("/auth/login")
+      .send({ email: "user@example.com", password: "SecurePass123!", extra: "field" });
+
+    expect(res.status).toBe(400);
   });
 });

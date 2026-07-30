@@ -5,5 +5,11 @@ export default defineConfig({
     globals: true,
     environment: "node",
     include: ["tests/**/*.test.ts"],
+    server: {
+      deps: {
+        // jsonwebtoken is CJS; inline it so Vite can transform it
+        inline: ["jsonwebtoken"],
+      },
+    },
   },
 });

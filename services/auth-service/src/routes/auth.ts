@@ -7,6 +7,7 @@ import { Router, type RequestHandler } from "express";
 import { z } from "zod";
 import type { RegistrationService } from "../services/registrationService.js";
 import { PolicyViolationError } from "../services/registrationService.js";
+import type { LoginService } from "../services/loginService.js";
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -22,6 +23,11 @@ const VerifyEmailSchema = z.object({
 
 const ResendSchema = z.object({
   email: z.string().email().max(320),
+}).strict();
+
+const LoginSchema = z.object({
+  email: z.string().email().max(320),
+  password: z.string().min(1).max(1024),
 }).strict();
 
 const GENERIC_202 = { message: "If the address is valid you will receive a verification email." };
@@ -60,7 +66,10 @@ function isRateLimited(key: string): { limited: boolean; retryAfterSeconds: numb
 
 // ─── Router factory ───────────────────────────────────────────────────────────
 
-export function createAuthRouter(registrationService: RegistrationService): Router {
+export function createAuthRouter(
+  registrationService: RegistrationService,
+  loginService?: LoginService,
+): Router {
   const router = Router();
 
   const register: RequestHandler = async (req, res, next) => {
@@ -148,6 +157,60 @@ export function createAuthRouter(registrationService: RegistrationService): Rout
   router.post("/register", register);
   router.post("/verify-email", verifyEmail);
   router.post("/resend-verification", resendVerification);
+
+  if (loginService) {
+    const login: RequestHandler = async (req, res, next) => {
+      try {
+        const ip = String(req.ip ?? req.socket.remoteAddress ?? "");
+        const parsed = LoginSchema.safeParse(req.body);
+        if (!parsed.success) {
+          res.status(400).json({ error: { code: "validation_failed", details: parsed.error.issues } });
+          return;
+        }
+
+        const { email } = parsed.data;
+        const key = `login:${email.toLowerCase()}:${ip}`;
+        const { limited, retryAfterSeconds } = isRateLimited(key);
+        if (limited) {
+          res.status(429).json({ error: { code: "rate_limited", retryAfterSeconds } });
+          return;
+        }
+
+        const result = await loginService.login({
+          ...parsed.data,
+          userAgent: req.headers["user-agent"],
+          ipAddress: ip,
+        });
+
+        switch (result.outcome) {
+          case "success":
+            res.status(200).json({
+              accessToken: result.accessToken,
+              tokenType: result.tokenType,
+              expiresIn: result.expiresIn,
+              user: result.user,
+            });
+            break;
+          case "invalid_credentials":
+            res.status(401).json({ error: { code: "invalid_credentials" } });
+            break;
+          case "account_locked":
+            res.status(423).json({ error: { code: "account_locked", retryAfterSeconds: result.retryAfterSeconds } });
+            break;
+          case "email_not_verified":
+            res.status(403).json({ error: { code: "email_not_verified" } });
+            break;
+          case "account_disabled":
+            res.status(403).json({ error: { code: "account_disabled" } });
+            break;
+        }
+      } catch (err) {
+        next(err);
+      }
+    };
+
+    router.post("/login", login);
+  }
 
   return router;
 }
