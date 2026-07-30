@@ -600,3 +600,212 @@ model AuditLedger {
   @@index([correlationId])
   @@map("audit_ledger")
 }
+
+// ---------------------------------------------------------------------------
+// Destination
+// Normalised destination record used as a grouping key for collections and
+// home references. slug is the stable public identifier used in browse URLs.
+// heroImageRef and heroImageAltText are metadata references only — no image
+// bytes are stored in the database.
+// ---------------------------------------------------------------------------
+
+model Destination {
+  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug             String                 @unique
+  displayName      String
+  regionName       String?
+  countryCode      String?
+  heroImageRef     String?
+  heroImageAltText String?
+  isActive         Boolean                @default(true)
+  sortOrder        Int                    @default(0)
+  contentVersion   Int                    @default(1)
+  dataClassification DataClassificationTier @default(PUBLIC)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  homeReferences HomeInventoryReference[]
+  collections    CuratedCollection[]
+
+  @@index([slug])
+  @@index([isActive, sortOrder])
+  @@map("destination")
+}
+
+// ---------------------------------------------------------------------------
+// CuratedCollection
+// Marriott-inspired editorial collection (Beachfront Rentals, Ski-In Ski-Out
+// Chalets, etc.). slug is the stable public identifier. isActive controls
+// public visibility. contentVersion enables cache-safe ETag generation.
+// heroImageRef is a metadata reference only — no image bytes stored here.
+// ---------------------------------------------------------------------------
+
+model CuratedCollection {
+  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug             String                 @unique
+  displayName      String
+  editorialEyebrow String?
+  description      String?
+  heroImageRef     String?
+  heroImageAltText String?
+  isActive         Boolean                @default(true)
+  sortOrder        Int                    @default(0)
+  contentVersion   Int                    @default(1)
+  destinationId    String?                @db.Uuid
+  dataClassification DataClassificationTier @default(PUBLIC)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  destination  Destination?          @relation(fields: [destinationId], references: [id])
+  homes        CollectionHome[]
+  interestTags CollectionInterestTag[]
+
+  @@index([slug])
+  @@index([isActive, sortOrder])
+  @@map("curated_collection")
+}
+
+// ---------------------------------------------------------------------------
+// HomeInventoryReference
+// Canonical source reference to an HVMI (or other Marriott-partnered) home.
+// This is NOT a live listing replica — it holds the stable sourceRef used to
+// request live availability and rates from the connector. heroImageRef is a
+// metadata reference only.
+// ---------------------------------------------------------------------------
+
+model HomeInventoryReference {
+  id                  String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceRef           String                 @unique
+  supplierId          String
+  bookingSource       BookingSource
+  displayNameSnapshot String
+  destinationId       String?                @db.Uuid
+  destinationSlug     String?
+  heroImageRef        String?
+  heroImageAltText    String?
+  isActive            Boolean                @default(true)
+  dataClassification  DataClassificationTier @default(INTERNAL)
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+
+  destination  Destination?           @relation(fields: [destinationId], references: [id])
+  collections  CollectionHome[]
+  savedHomes   SavedHome[]
+  interestTags HomeInterestTag[]
+
+  @@index([sourceRef])
+  @@index([destinationId])
+  @@index([isActive])
+  @@map("home_inventory_reference")
+}
+
+// ---------------------------------------------------------------------------
+// CollectionHome
+// Membership link between a CuratedCollection and a HomeInventoryReference.
+// sortOrder controls display order within the collection.
+// The unique constraint prevents duplicate membership rows.
+// ---------------------------------------------------------------------------
+
+model CollectionHome {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  collectionId String   @db.Uuid
+  homeRefId    String   @db.Uuid
+  sortOrder    Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  collection CuratedCollection      @relation(fields: [collectionId], references: [id])
+  homeRef    HomeInventoryReference @relation(fields: [homeRefId], references: [id])
+
+  @@unique([collectionId, homeRefId])
+  @@index([collectionId, sortOrder])
+  @@map("collection_home")
+}
+
+// ---------------------------------------------------------------------------
+// InterestTag
+// Normalised interest tag used across collections and home references.
+// tagKey is the stable machine identifier (BEACHFRONT, SKI_IN_SKI_OUT, etc.).
+// displayLabel is the user-facing string.
+// ---------------------------------------------------------------------------
+
+model InterestTag {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tagKey       String   @unique
+  displayLabel String
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  collections CollectionInterestTag[]
+  homes       HomeInterestTag[]
+
+  @@index([tagKey])
+  @@map("interest_tag")
+}
+
+// ---------------------------------------------------------------------------
+// CollectionInterestTag
+// Many-to-many between CuratedCollection and InterestTag.
+// ---------------------------------------------------------------------------
+
+model CollectionInterestTag {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  collectionId String   @db.Uuid
+  tagId        String   @db.Uuid
+  createdAt    DateTime @default(now())
+
+  collection CuratedCollection @relation(fields: [collectionId], references: [id])
+  tag        InterestTag       @relation(fields: [tagId], references: [id])
+
+  @@unique([collectionId, tagId])
+  @@index([collectionId])
+  @@map("collection_interest_tag")
+}
+
+// ---------------------------------------------------------------------------
+// HomeInterestTag
+// Many-to-many between HomeInventoryReference and InterestTag.
+// ---------------------------------------------------------------------------
+
+model HomeInterestTag {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  homeRefId String   @db.Uuid
+  tagId     String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  homeRef HomeInventoryReference @relation(fields: [homeRefId], references: [id])
+  tag     InterestTag            @relation(fields: [tagId], references: [id])
+
+  @@unique([homeRefId, tagId])
+  @@index([homeRefId])
+  @@map("home_interest_tag")
+}
+
+// ---------------------------------------------------------------------------
+// SavedHome
+// Owner-scoped link from a traveller to a HomeInventoryReference.
+// The unique constraint on (ownerRef, homeRefId) enforces idempotency —
+// duplicate heart actions do not create duplicate rows or reset savedAt.
+// ownerRef uses the same tokenized pattern as TravellerProfile.ownerRef.
+// notes must not contain PII (validated at the repository layer).
+// ---------------------------------------------------------------------------
+
+model SavedHome {
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerRef           String
+  homeRefId          String                 @db.Uuid
+  savedAt            DateTime               @default(now())
+  notes              String?
+  dataClassification DataClassificationTier @default(INTERNAL)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  homeRef HomeInventoryReference @relation(fields: [homeRefId], references: [id])
+
+  @@unique([ownerRef, homeRefId])
+  @@index([ownerRef])
+  @@index([homeRefId])
+  @@map("saved_home")
+}

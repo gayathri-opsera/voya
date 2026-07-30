@@ -89,3 +89,32 @@ export {
 } from './conversation-checkpoint.js';
 
 export type { DataMinimizationResult } from './conversation-checkpoint.js';
+
+// ---------------------------------------------------------------------------
+// Discovery domain types — collections, destinations, interest tags
+// ---------------------------------------------------------------------------
+
+export {
+  isValidSlug,
+  validateSlug,
+  isValidSourceRef,
+  validateSourceRef,
+  isValidImageRef,
+  isValidContentVersion,
+  isValidTagKey,
+  validateTagKey,
+  INTEREST_TAG_KEYS,
+  COLLECTION_SLUGS,
+} from './discovery.js';
+
+export type { InterestTagKey, CollectionSlug } from './discovery.js';
+
+// ---------------------------------------------------------------------------
+// Saved-home domain helpers
+// ---------------------------------------------------------------------------
+
+export {
+  validateSavedHomeNotes,
+  deduplicateTagKeys,
+  deriveInterestTagsFromSavedHomes,
+} from './saved-homes.js';
