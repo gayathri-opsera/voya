@@ -71,3 +71,40 @@ export {
   nestedSensitivePayloadFixture,
   cleanConstraintsPayload,
 } from './conversation-checkpoint-fixtures.js';
+
+export {
+  // Owner references
+  SAVED_HOME_OWNER_GUEST,
+  SAVED_HOME_OWNER_BONVOY,
+  // Destinations
+  testMaldivesDestination,
+  testAspenDestination,
+  testNapaValleyDestination,
+  // Interest tags
+  testBeachfrontTag,
+  testSkiInSkiOutTag,
+  testVineyardTag,
+  testNationalParkTag,
+  testMonthlyRentalTag,
+  allInterestTags,
+  // Collections
+  testBeachfrontCollection,
+  testSkiInSkiOutCollection,
+  testVineyardWineryCollection,
+  testNationalParkCollection,
+  testMonthlyRentalsCollection,
+  allCollections,
+  // Home inventory references
+  testBeachfrontHomeA,
+  testBeachfrontHomeB,
+  testSkiChaletHomeA,
+  testVineyardHomeA,
+  allHomeReferences,
+  // Saved homes
+  testGuestSavedBeachfrontA,
+  testGuestSavedSkiChalet,
+  testBonvoySavedVineyard,
+  // Types
+  type DiscoveryFixture,
+  type SavedHomeFixture,
+} from './discovery-fixtures.js';

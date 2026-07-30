@@ -88,6 +88,19 @@ export type {
   ConversationCheckpointRepository,
 } from './interfaces/conversation-checkpoint-repository.js';
 
+export type {
+  DestinationRow,
+  CuratedCollectionRow,
+  HomeInventoryReferenceRow,
+  InterestTagRow,
+  DiscoveryRepository,
+} from './interfaces/discovery-repository.js';
+
+export type {
+  SavedHomeRow,
+  SavedHomeRepository,
+} from './interfaces/saved-home-repository.js';
+
 // ---------------------------------------------------------------------------
 // Prisma-backed implementations
 // ---------------------------------------------------------------------------
@@ -99,3 +112,5 @@ export { PrismaTripConfidenceReceiptRepository } from './prisma/prisma-trip-conf
 export { PrismaSupplierManifestRepository } from './prisma/prisma-supplier-manifest-repository.js';
 export { PrismaAuditRecordRepository } from './prisma/prisma-audit-record-repository.js';
 export { PrismaConversationCheckpointRepository } from './prisma/prisma-conversation-checkpoint-repository.js';
+export { PrismaDiscoveryRepository } from './prisma/prisma-discovery-repository.js';
+export { PrismaSavedHomeRepository } from './prisma/prisma-saved-home-repository.js';
