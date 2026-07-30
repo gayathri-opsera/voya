@@ -1,0 +1,1 @@
+{"scenario":"5xx_then_success","responses":[{"status":500,"body":{"error":"internal"}},{"status":200,"body":{"offers":[{"offerId":"off_002","provider":"AMADEUS","provenance":"AMADEUS","bookable":true}]}}]}

@@ -1,0 +1,22 @@
+{
+  "name": "@travel/supplier-port",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SupplierPort abstraction with egress allow-list and typed error hierarchy",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@travel/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

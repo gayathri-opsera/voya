@@ -1,0 +1,1 @@
+{"scenario":"blocked_host","blockedUrl":"https://evil.example.com/search","allowedHosts":["api.amadeus.com"]}
