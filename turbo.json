@@ -1,25 +1,63 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalDependencies": [
+    "tsconfig.json",
+    ".npmrc",
+    "pnpm-workspace.yaml"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "inputs": ["src/**", "package.json", "tsconfig.json"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "typecheck": {
-      "dependsOn": ["^build"],
-      "outputs": []
+      "dependsOn": ["^build", "contract:gen"],
+      "inputs": ["src/**", "app/**", "lib/**", "types/**", "tsconfig.json"],
+      "outputs": ["*.tsbuildinfo"]
     },
     "lint": {
       "dependsOn": [],
+      "inputs": ["src/**", "app/**", "lib/**", "components/**", ".eslintrc*", "eslint.config*"],
       "outputs": []
     },
     "test": {
       "dependsOn": ["^build"],
+      "inputs": ["src/**", "tests/**", "__tests__/**", "test/**", "vitest.config.*", "jest.config.*"],
       "outputs": ["coverage/**"],
       "cache": false
     },
+    "test:unit": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "tests/**", "__tests__/**", "test/**", "vitest.config.*", "jest.config.*"],
+      "outputs": ["coverage/**"],
+      "cache": true
+    },
+    "test:integration": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "contract:gen": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "scripts/**", "tsconfig.json"],
+      "outputs": ["contract-baselines/**", "dist/**"]
+    },
+    "dev": {
+      "dependsOn": [],
+      "cache": false,
+      "persistent": true
+    },
     "clean": {
+      "cache": false
+    },
+    "db:generate": {
+      "dependsOn": [],
+      "cache": false,
+      "outputs": ["node_modules/.prisma/**", "node_modules/@prisma/client/**"]
+    },
+    "db:migrate": {
+      "dependsOn": [],
       "cache": false
     }
   }

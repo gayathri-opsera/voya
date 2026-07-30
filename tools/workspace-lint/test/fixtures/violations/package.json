@@ -1,0 +1,14 @@
+{
+  "name": "@travel/bad-service",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "dependencies": {
+    "zod": "^3.22.0",
+    "express": "catalog:",
+    "@travel/contracts": "^1.0.0"
+  }
+}

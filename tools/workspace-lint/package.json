@@ -1,0 +1,20 @@
+{
+  "name": "@travel/workspace-lint",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Workspace validation: catalog drift, workspace protocol, engines consistency",
+  "type": "module",
+  "bin": {
+    "workspace-lint": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src test",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
