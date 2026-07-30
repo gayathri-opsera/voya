@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "contactEmail": {
+      "format": "email",
+      "type": "string"
+    },
+    "contactPhone": {
+      "type": "string"
+    },
+    "passengers": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "dateOfBirth": {
+            "type": "string"
+          },
+          "firstName": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "lastName": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nationality": {
+            "pattern": "^[A-Z]{2}$",
+            "type": "string"
+          },
+          "passportNumber": {
+            "pattern": "^[A-Z0-9]{6,20}$",
+            "type": "string"
+          },
+          "specialRequests": {
+            "maxLength": 500,
+            "type": "string"
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName",
+          "dateOfBirth"
+        ],
+        "type": "object"
+      },
+      "maxItems": 9,
+      "minItems": 1,
+      "type": "array"
+    },
+    "specialRequests": {
+      "maxLength": 500,
+      "type": "string"
+    }
+  },
+  "type": "object"
+}

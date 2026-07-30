@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "amount": {
+      "pattern": "^\\d+(\\.\\d{1,2})?$",
+      "type": "string"
+    },
+    "bookingId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "correlationId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]+$",
+      "type": "string"
+    },
+    "currency": {
+      "pattern": "^[A-Z]{3}$",
+      "type": "string"
+    },
+    "eventId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "occurredAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "paymentId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "PENDING",
+        "PROCESSING",
+        "COMPLETED",
+        "FAILED",
+        "REFUNDED",
+        "PARTIALLY_REFUNDED"
+      ],
+      "type": "string"
+    },
+    "type": {
+      "enum": [
+        "payment.completed",
+        "payment.failed",
+        "payment.refunded"
+      ],
+      "type": "string"
+    },
+    "userId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "version": {
+      "const": "1.0",
+      "type": "string"
+    }
+  },
+  "required": [
+    "correlationId",
+    "eventId",
+    "occurredAt",
+    "version",
+    "type",
+    "paymentId",
+    "bookingId",
+    "userId",
+    "status",
+    "amount",
+    "currency"
+  ],
+  "type": "object"
+}

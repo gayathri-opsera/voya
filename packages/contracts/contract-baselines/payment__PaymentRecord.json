@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "amount": {
+      "pattern": "^\\d+(\\.\\d{1,2})?$",
+      "type": "string"
+    },
+    "bookingId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "currency": {
+      "allOf": [
+        {
+          "type": "string"
+        },
+        {
+          "pattern": "^[A-Z]{3}$",
+          "type": "string"
+        }
+      ]
+    },
+    "failureReason": {
+      "type": "string"
+    },
+    "paymentId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "paymentIntentId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "processedAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "receiptUrl": {
+      "format": "uri",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "PENDING",
+        "PROCESSING",
+        "COMPLETED",
+        "FAILED",
+        "REFUNDED",
+        "PARTIALLY_REFUNDED"
+      ],
+      "type": "string"
+    },
+    "stripePaymentIntentId": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "required": [
+    "paymentId",
+    "paymentIntentId",
+    "bookingId",
+    "status",
+    "amount",
+    "currency",
+    "createdAt",
+    "updatedAt"
+  ],
+  "type": "object"
+}
