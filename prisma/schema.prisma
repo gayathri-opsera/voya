@@ -183,6 +183,56 @@ enum CheckpointOutcome {
 }
 
 // ---------------------------------------------------------------------------
+// Loyalty Ledger Enums
+// All loyalty activity in Voya is SIMULATED and explicitly labelled as such.
+// No real Bonvoy balance is debited. These enums govern the append-only
+// simulated loyalty ledger lifecycle.
+// ---------------------------------------------------------------------------
+
+enum LoyaltyTransactionType {
+  EARN_ESTIMATE
+  AWARD_NIGHT
+  CASH_PLUS_POINTS
+  CERTIFICATE_REDEMPTION
+  POINTS_ADVANCE
+  ADJUSTMENT
+  HOLD_PLACED
+  HOLD_COMMITTED
+  HOLD_REVERSED
+}
+
+enum LoyaltyLedgerStatus {
+  PENDING
+  ACTIVE
+  COMMITTED
+  REVERSED
+  EXPIRED
+  REJECTED
+}
+
+enum RedemptionMode {
+  CASH_ONLY
+  POINTS_ONLY
+  CASH_PLUS_POINTS
+  CERTIFICATE
+  POINTS_ADVANCE
+}
+
+enum PointsAdvanceEligibility {
+  NOT_ELIGIBLE
+  ELIGIBLE
+  APPLIED
+}
+
+enum SimulatedLiabilityCategory {
+  EARN_ESTIMATE
+  REDEMPTION_HOLD
+  REDEMPTION_COMMIT
+  ADJUSTMENT
+  CERTIFICATE_HOLD
+}
+
+// ---------------------------------------------------------------------------
 // TravellerProfile
 // Owns all traveller-linked aggregates. ownerRef is a tokenised reference
 // (Bonvoy token or guest-session token) — never a raw Bonvoy account number.
@@ -808,4 +858,159 @@ model SavedHome {
   @@index([ownerRef])
   @@index([homeRefId])
   @@map("saved_home")
+}
+
+// ---------------------------------------------------------------------------
+// LoyaltyQuote
+// A deterministic simulated loyalty pricing quote for one itinerary / cart.
+// idempotencyKey ensures a retry returns the original quote row, not a
+// duplicate. simulated is always true — no real Bonvoy balance is consulted.
+// ---------------------------------------------------------------------------
+
+model LoyaltyQuote {
+  id                       String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerRef                 String
+  idempotencyKey           String                     @unique
+  itineraryRef             String?
+  cartRef                  String?
+  lineItemRef              String?
+  redemptionMode           RedemptionMode
+  pointsAmount             Int
+  cashAmountMinorUnits     Int?
+  currencyCode             String?
+  estimatedEarnPoints      Int?
+  pointsAdvanceEligibility PointsAdvanceEligibility   @default(NOT_ELIGIBLE)
+  certificateRef           String?
+  simulated                Boolean                    @default(true)
+  status                   LoyaltyLedgerStatus        @default(PENDING)
+  expiresAt                DateTime?
+  dataClassification       DataClassificationTier     @default(CONFIDENTIAL)
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+
+  holds         LoyaltyHold[]
+  ledgerEntries LoyaltyLedgerEntry[]
+
+  @@index([ownerRef])
+  @@index([itineraryRef])
+  @@index([cartRef])
+  @@map("loyalty_quote")
+}
+
+// ---------------------------------------------------------------------------
+// LoyaltyHold
+// A hold placed against a LoyaltyQuote. transactionRef is an immutable
+// stable identifier used by the checkout saga. simulated is always true.
+// ---------------------------------------------------------------------------
+
+model LoyaltyHold {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerRef             String
+  quoteId              String                 @db.Uuid
+  idempotencyKey       String                 @unique
+  pointsAmount         Int
+  cashAmountMinorUnits Int?
+  currencyCode         String?
+  simulated            Boolean                @default(true)
+  status               LoyaltyLedgerStatus    @default(ACTIVE)
+  expiresAt            DateTime?
+  transactionRef       String                 @unique
+  dataClassification   DataClassificationTier @default(CONFIDENTIAL)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  quote         LoyaltyQuote         @relation(fields: [quoteId], references: [id])
+  ledgerEntries LoyaltyLedgerEntry[]
+
+  @@index([ownerRef])
+  @@index([quoteId])
+  @@map("loyalty_hold")
+}
+
+// ---------------------------------------------------------------------------
+// LoyaltyLedgerEntry
+// Append-only record for every lifecycle event. Rows are never updated after
+// creation — status projections are derived, never mutated. simulated is
+// always true. No real Bonvoy account number or certificate identifier stored.
+// ---------------------------------------------------------------------------
+
+model LoyaltyLedgerEntry {
+  id                   String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerRef             String
+  quoteId              String?                    @db.Uuid
+  holdId               String?                    @db.Uuid
+  idempotencyKey       String                     @unique
+  transactionType      LoyaltyTransactionType
+  liabilityCategory    SimulatedLiabilityCategory
+  pointsAmount         Int
+  cashAmountMinorUnits Int?
+  currencyCode         String?
+  itineraryRef         String?
+  cartRef              String?
+  lineItemRef          String?
+  simulated            Boolean                    @default(true)
+  status               LoyaltyLedgerStatus
+  dataClassification   DataClassificationTier     @default(CONFIDENTIAL)
+  createdAt            DateTime                   @default(now())
+
+  quote LoyaltyQuote? @relation(fields: [quoteId], references: [id])
+  hold  LoyaltyHold?  @relation(fields: [holdId], references: [id])
+
+  @@index([ownerRef])
+  @@index([holdId])
+  @@index([quoteId])
+  @@index([transactionType])
+  @@index([status])
+  @@map("loyalty_ledger_entry")
+}
+
+// ---------------------------------------------------------------------------
+// LoyaltyReconciliationSnapshot
+// Point-in-time accounting summary derived from LoyaltyLedgerEntry rows.
+// Generated by the reconciliation snapshot method; never mutates ledger rows.
+// ---------------------------------------------------------------------------
+
+model LoyaltyReconciliationSnapshot {
+  id                            String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerRef                      String
+  snapshotPeriod                String
+  totalSimulatedEarnPoints      Int                    @default(0)
+  totalSimulatedHeldPoints      Int                    @default(0)
+  totalSimulatedCommittedPoints Int                    @default(0)
+  totalSimulatedReversedPoints  Int                    @default(0)
+  totalCashMinorUnits           Int                    @default(0)
+  currencyCode                  String?
+  entryCount                    Int                    @default(0)
+  simulated                     Boolean                @default(true)
+  generatedAt                   DateTime               @default(now())
+  dataClassification            DataClassificationTier @default(CONFIDENTIAL)
+  createdAt                     DateTime               @default(now())
+
+  @@unique([ownerRef, snapshotPeriod])
+  @@index([ownerRef])
+  @@map("loyalty_reconciliation_snapshot")
+}
+
+// ---------------------------------------------------------------------------
+// CertificateReference
+// Synthetic tokenized certificate. certificateRef is a generated placeholder
+// — never a real Bonvoy certificate number.
+// ---------------------------------------------------------------------------
+
+model CertificateReference {
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerRef           String
+  certificateRef     String                 @unique
+  certificateType    String
+  pointsValue        Int
+  expiresAt          DateTime?
+  simulated          Boolean                @default(true)
+  status             LoyaltyLedgerStatus    @default(ACTIVE)
+  dataClassification DataClassificationTier @default(CONFIDENTIAL)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@index([ownerRef])
+  @@index([certificateRef])
+  @@map("certificate_reference")
 }

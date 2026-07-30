@@ -108,3 +108,37 @@ export {
   type DiscoveryFixture,
   type SavedHomeFixture,
 } from './discovery-fixtures.js';
+
+export {
+  // Owner references
+  LOYALTY_OWNER_A,
+  LOYALTY_OWNER_B,
+  // CreateQuoteInput fixtures
+  earnEstimateQuoteInput,
+  cashPlusPointsQuoteInput,
+  certificateQuoteInput,
+  pointsAdvanceQuoteInput,
+  // PlaceHoldInput fixtures
+  placeHoldInput,
+  cashPlusPointsHoldInput,
+  // Quote row fixtures
+  testEarnEstimateQuoteRow,
+  testCashPlusPointsQuoteRow,
+  testCertificateQuoteRow,
+  testPointsAdvanceQuoteRow,
+  // Hold row fixtures
+  testActiveHoldRow,
+  testCommittedHoldRow,
+  testReversedHoldRow,
+  // Ledger entry fixtures
+  testHoldPlacedEntryRow,
+  testHoldCommittedEntryRow,
+  testHoldReversedEntryRow,
+  testEarnAdjustmentEntryRow,
+  // Reconciliation snapshot
+  testReconciliationSnapshotRow,
+  // Certificate reference
+  testCertificateReferenceRow,
+  // Over-reversal rejection scenario
+  overReversalScenario,
+} from './loyalty-ledger-fixtures.js';
