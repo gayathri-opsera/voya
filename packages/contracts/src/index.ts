@@ -78,3 +78,61 @@ export type {
   ApiError,
   ApiErrorParseResult,
 } from './common/api-error.js';
+
+// ---------------------------------------------------------------------------
+// Governance: data classification registry — schema, types, registry, helpers
+// ---------------------------------------------------------------------------
+
+export {
+  DataCategoryKeyEnum,
+  DataCategoryKey,
+  DataCategoryEntrySchema,
+  DATA_CATEGORY_REGISTRY,
+  lookupDataCategory,
+  validateDataCategoryEntry,
+} from './governance/data-classification.js';
+
+export type {
+  DataCategoryKey as DataCategoryKeyType,
+  DataCategoryEntry,
+  DataCategoryValidationError,
+} from './governance/data-classification.js';
+
+// ---------------------------------------------------------------------------
+// Governance: retention policy registry — schema, types, registry, helpers
+// ---------------------------------------------------------------------------
+
+export {
+  RetentionApprovalStatusEnum,
+  RetentionApprovalStatus,
+  RetentionPurgeActionEnum,
+  RetentionPurgeAction,
+  RetentionPolicySchema,
+  RETENTION_POLICY_REGISTRY,
+  parseRetentionPolicy,
+  lookupRetentionPolicy,
+} from './governance/retention-policy.js';
+
+export type {
+  RetentionApprovalStatus as RetentionApprovalStatusType,
+  RetentionPurgeAction as RetentionPurgeActionType,
+  RetentionPolicy,
+  RetentionPolicyParseResult,
+} from './governance/retention-policy.js';
+
+// ---------------------------------------------------------------------------
+// Governance: prompt safety validation — schema, types, helpers, error class
+// ---------------------------------------------------------------------------
+
+export {
+  GovernanceErrorSchema,
+  validatePromptCategories,
+  isPromptSafe,
+  assertPromptSafe,
+  PromptSafetyViolationError,
+} from './governance/prompt-safety.js';
+
+export type {
+  GovernanceError,
+  CategoryAnnotation,
+} from './governance/prompt-safety.js';
