@@ -1,0 +1,71 @@
+{
+  "name": "@travel/contracts",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Shared Zod schemas and TypeScript types for the Voya travel platform",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./search": {
+      "import": "./dist/search/index.js",
+      "require": "./dist/search/index.cjs",
+      "types": "./dist/search/index.d.ts"
+    },
+    "./booking": {
+      "import": "./dist/booking/index.js",
+      "require": "./dist/booking/index.cjs",
+      "types": "./dist/booking/index.d.ts"
+    },
+    "./payment": {
+      "import": "./dist/payment/index.js",
+      "require": "./dist/payment/index.cjs",
+      "types": "./dist/payment/index.d.ts"
+    },
+    "./auth": {
+      "import": "./dist/auth/index.js",
+      "require": "./dist/auth/index.cjs",
+      "types": "./dist/auth/index.d.ts"
+    },
+    "./user": {
+      "import": "./dist/user/index.js",
+      "require": "./dist/user/index.cjs",
+      "types": "./dist/user/index.d.ts"
+    },
+    "./events": {
+      "import": "./dist/events/index.js",
+      "require": "./dist/events/index.cjs",
+      "types": "./dist/events/index.d.ts"
+    },
+    "./errors": {
+      "import": "./dist/errors/index.js",
+      "require": "./dist/errors/index.cjs",
+      "types": "./dist/errors/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "keywords": ["contracts", "zod", "typescript", "travel"]
+}
