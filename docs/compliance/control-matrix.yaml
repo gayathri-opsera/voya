@@ -1,0 +1,330 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Control Traceability Matrix — Marriott Voya Platform
+# Version: 0.1.0  (updated by WO-100)
+#
+# Schema per entry:
+#   control_id          - unique identifier for this control
+#   framework           - PCI-DSS | GDPR | SOC2 | OWASP
+#   description         - one-sentence description of the control
+#   owning_role         - job role accountable for this control
+#   implementing_component - monorepo path(s) that implement the control
+#   evidence_source     - database table | log stream | S3 prefix | pipeline stage
+#   implementing_story_ref - WO-xxx or "baseline" for pre-existing controls
+#   status              - implemented | planned | partial
+# ─────────────────────────────────────────────────────────────────────────────
+
+controls:
+
+  # ── OWASP Top-10 ──────────────────────────────────────────────────────────
+
+  - control_id: OWASP-A01-ACCESS-CONTROL
+    framework: OWASP
+    description: >
+      Broken Access Control — enforce RBAC at every service boundary;
+      unauthenticated requests receive 401, unpermitted requests receive 403.
+    owning_role: Backend Engineering Lead
+    implementing_component:
+      - services/auth-service/src/
+      - packages/shared/src/middleware/
+    evidence_source: auth-service structured logs (correlationId, userId, resource)
+    implementing_story_ref: WO-020
+    status: partial
+
+  - control_id: OWASP-A05-SECURITY-MISCONFIG
+    framework: OWASP
+    description: >
+      Security Misconfiguration — harden HTTP headers (CSP, HSTS, X-Frame-Options),
+      disable stack-trace leakage in production, use strict schema validation.
+    owning_role: Platform Engineering Lead
+    implementing_component:
+      - packages/shared/src/middleware/
+      - packages/contracts/src/
+    evidence_source: pipeline security scan (pre-commit-scan stage), HTTP response header logs
+    implementing_story_ref: WO-003
+    status: partial
+
+  - control_id: OWASP-A09-SECURITY-LOGGING
+    framework: OWASP
+    description: >
+      Security Logging and Monitoring Failures — structured JSON logs with
+      correlationId/traceId; PII redacted; 30-day application log retention;
+      1-year auth audit-log retention.
+    owning_role: Platform Engineering Lead
+    implementing_component:
+      - packages/observability/src/logger.ts
+      - packages/observability/src/context.ts
+    evidence_source: CloudWatch log group /voya/services/* (application), /voya/audit/* (audit)
+    implementing_story_ref: WO-006
+    status: implemented
+
+  - control_id: OWASP-A10-SSRF
+    framework: OWASP
+    description: >
+      Server-Side Request Forgery — all outbound HTTP to third-party suppliers
+      (Amadeus, RapidAPI, Anthropic, AWS SES) must use allow-listed base URLs
+      from environment config; no user-supplied URLs are fetched.
+    owning_role: Backend Engineering Lead
+    implementing_component:
+      - services/flight-service/src/
+      - services/hotel-service/src/
+      - services/ai-orchestration/src/
+    evidence_source: outbound-http request logs, allow-list config assertions in CI
+    implementing_story_ref: planned
+    status: planned
+
+  # ── PCI-DSS (SAQ-A scope) ─────────────────────────────────────────────────
+
+  - control_id: PCI-REQ-1-NETWORK-SECURITY
+    framework: PCI-DSS
+    description: >
+      Network security controls — payment-service runs in an isolated subnet;
+      no direct inbound internet access; all external traffic via api-gateway.
+    owning_role: DevOps/Infrastructure Lead
+    implementing_component:
+      - infrastructure/ (planned)
+    evidence_source: VPC flow logs, security-group change-management records
+    implementing_story_ref: planned
+    status: planned
+
+  - control_id: PCI-REQ-3-PAN-NEVER-STORED
+    framework: PCI-DSS
+    description: >
+      Do not store sensitive authentication data (SAQ-A) — no PAN, CVV, or
+      track data enters any Voya service; card capture is exclusively in
+      Stripe-hosted iframe.
+    owning_role: Payment Engineering Lead
+    implementing_component:
+      - services/payment-service/src/
+      - apps/frontend/app/checkout/
+    evidence_source: code-review log, SAST scan results (no PAN pattern in source)
+    implementing_story_ref: planned
+    status: planned
+
+  - control_id: PCI-REQ-6-SECURE-DEVELOPMENT
+    framework: PCI-DSS
+    description: >
+      Develop and maintain secure systems — SAST on every PR via pre-commit
+      security scan; dependency CVE scanning; no critical/high vulnerabilities
+      in merge candidates.
+    owning_role: Security Engineering Lead
+    implementing_component:
+      - .cursor/hooks/forge-pre-commit.sh
+      - packages/contracts/scripts/
+    evidence_source: CI pipeline scan stage output, PR check logs
+    implementing_story_ref: WO-005
+    status: implemented
+
+  - control_id: PCI-REQ-8-IDENTITY-AUTH
+    framework: PCI-DSS
+    description: >
+      Identify users and authenticate access — Argon2id password hashing,
+      account lockout after 5 consecutive failures, enumeration-safe
+      registration and login responses.
+    owning_role: Backend Engineering Lead
+    implementing_component:
+      - services/auth-service/src/services/credentialService.ts
+      - services/auth-service/src/services/registrationService.ts
+    evidence_source: auth-service structured logs (lockout events, failed attempts)
+    implementing_story_ref: WO-019, WO-020
+    status: implemented
+
+  - control_id: PCI-REQ-10-LOG-ACCESS
+    framework: PCI-DSS
+    description: >
+      Log and monitor all access to system components and cardholder data
+      environment — structured JSON logging with user/session context;
+      1-year auth audit log retention.
+    owning_role: Platform Engineering Lead
+    implementing_component:
+      - packages/observability/src/logger.ts
+    evidence_source: CloudWatch /voya/audit/* log group, S3 evidence-archive bucket
+    implementing_story_ref: WO-006
+    status: implemented
+
+  - control_id: PCI-REQ-12-SECURITY-POLICY
+    framework: PCI-DSS
+    description: >
+      Support information security with organizational policies — this control
+      traceability matrix, PCI scope decision record, and GDPR RoPA constitute
+      the policy artefact set required by SAQ-A.
+    owning_role: Compliance and Risk Lead
+    implementing_component:
+      - docs/compliance/
+    evidence_source: Git commit history of docs/compliance/
+    implementing_story_ref: WO-100
+    status: implemented
+
+  # ── GDPR ──────────────────────────────────────────────────────────────────
+
+  - control_id: GDPR-ART-5-MINIMISATION
+    framework: GDPR
+    description: >
+      Data minimisation — collect only the personal data necessary for the
+      stated processing purpose; displayName is optional, passportNumber is
+      collected only at booking time.
+    owning_role: Product Sponsor
+    implementing_component:
+      - packages/contracts/src/auth/
+      - packages/contracts/src/booking/
+    evidence_source: Schema registry (SCHEMA_REGISTRY in packages/contracts/src/registry.ts)
+    implementing_story_ref: WO-001
+    status: implemented
+
+  - control_id: GDPR-ART-17-RIGHT-TO-ERASURE
+    framework: GDPR
+    description: >
+      Right to erasure — user account deletion must cascade-delete personal
+      data from users, credentials, sessions, and verification_tokens tables;
+      booking records pseudonymised after retention window.
+    owning_role: Backend Engineering Lead
+    implementing_component:
+      - services/auth-service/prisma/schema.prisma
+      - services/user-service/src/
+    evidence_source: DB migration ON DELETE CASCADE clauses, erasure audit log
+    implementing_story_ref: WO-018
+    status: partial
+
+  - control_id: GDPR-ART-25-PRIVACY-BY-DESIGN
+    framework: GDPR
+    description: >
+      Privacy by design — PII redaction in all log outputs (email, DOB,
+      passport number, auth headers); no PII in error messages or stack traces.
+    owning_role: Platform Engineering Lead
+    implementing_component:
+      - packages/observability/src/logger.ts
+    evidence_source: observability unit tests (PII redaction assertions)
+    implementing_story_ref: WO-006
+    status: implemented
+
+  - control_id: GDPR-ART-28-PROCESSOR-AGREEMENT
+    framework: GDPR
+    description: >
+      Data processor agreements — DPAs must be in place with Stripe, Amadeus,
+      RapidAPI, Anthropic, and AWS SES before processing EU resident data.
+    owning_role: Legal Counsel / Compliance and Risk Lead
+    implementing_component: docs/compliance/gdpr-ropa.md
+    evidence_source: Signed DPA documents (legal records system)
+    implementing_story_ref: WO-100
+    status: planned
+
+  # ── SOC 2 Type II ─────────────────────────────────────────────────────────
+
+  - control_id: SOC2-CC6-1-LOGICAL-ACCESS
+    framework: SOC2
+    description: >
+      CC6.1 Logical and Physical Access Controls — implement least-privilege
+      RBAC; access provisioning and deprovisioning are auditable.
+    owning_role: Backend Engineering Lead
+    implementing_component:
+      - services/auth-service/prisma/schema.prisma (Role, Permission, UserRole)
+    evidence_source: auth-service structured logs, role-assignment audit events
+    implementing_story_ref: WO-018
+    status: partial
+
+  - control_id: SOC2-CC7-2-ANOMALY-DETECTION
+    framework: SOC2
+    description: >
+      CC7.2 Monitor system components for anomalies — structured logs enable
+      alerting on lockout events, unusual login patterns, and elevated error rates.
+    owning_role: Platform Engineering Lead
+    implementing_component:
+      - packages/observability/src/logger.ts
+    evidence_source: CloudWatch Alarms on /voya/services/* log metric filters
+    implementing_story_ref: WO-006
+    status: partial
+
+  - control_id: SOC2-CC8-1-CHANGE-MANAGEMENT
+    framework: SOC2
+    description: >
+      CC8.1 Change management — all changes go through PR review; pre-commit
+      security scan blocks critical findings; Forge WO traceability links every
+      commit to a user story.
+    owning_role: Engineering Manager
+    implementing_component:
+      - .cursor/hooks/forge-pre-commit.sh
+      - .forge/project-id
+    evidence_source: GitHub PR history, Forge WO completion records
+    implementing_story_ref: setup
+    status: implemented
+
+  - control_id: SOC2-A1-1-AVAILABILITY
+    framework: SOC2
+    description: >
+      A1.1 Availability — services expose health endpoints; Turborepo build
+      pipeline fails fast on test or lint failure; deployment targets include
+      health-check gates.
+    owning_role: DevOps/Infrastructure Lead
+    implementing_component:
+      - turbo.json
+      - services/*/src/routes/health.ts (planned)
+    evidence_source: CI pipeline run history, uptime monitor logs
+    implementing_story_ref: planned
+    status: planned
+
+  # ── Business Rules ─────────────────────────────────────────────────────────
+
+  - control_id: BR-15-PAYMENT-ISOLATION
+    framework: PCI-DSS
+    description: >
+      BR-15: Payment data isolation — payment-service must never log or return
+      card numbers; only PaymentIntent IDs and confirmation status are handled.
+    owning_role: Payment Engineering Lead
+    implementing_component:
+      - services/payment-service/src/
+      - packages/observability/src/logger.ts (stripe-signature redaction)
+    evidence_source: SAST scan, code review log, observability redaction tests
+    implementing_story_ref: planned
+    status: planned
+
+  - control_id: BR-16-TOKEN-EXPIRY
+    framework: PCI-DSS
+    description: >
+      BR-16: Verification and session tokens must expire; tokens stored only
+      as cryptographic hashes; reuse of consumed tokens returns error.
+    owning_role: Backend Engineering Lead
+    implementing_component:
+      - services/auth-service/src/services/tokenService.ts
+      - services/auth-service/src/repositories/sessionRepository.ts
+    evidence_source: tokenService unit tests (expiry, reuse, hash-only storage)
+    implementing_story_ref: WO-020
+    status: implemented
+
+  - control_id: BR-17-PASSWORD-POLICY
+    framework: SOC2
+    description: >
+      BR-17: Minimum password strength enforced at registration and reset;
+      common passwords rejected; account lockout after 5 failures in 15 minutes.
+    owning_role: Backend Engineering Lead
+    implementing_component:
+      - services/auth-service/src/services/credentialService.ts
+    evidence_source: credentialService unit tests (policy, lockout, timing)
+    implementing_story_ref: WO-019
+    status: implemented
+
+  - control_id: BR-18-ENUMERATION-SAFETY
+    framework: GDPR
+    description: >
+      BR-18: Registration and password-reset endpoints must not reveal whether
+      an email is registered; identical response shape for new and existing emails.
+    owning_role: Backend Engineering Lead
+    implementing_component:
+      - services/auth-service/src/services/registrationService.ts
+      - services/auth-service/src/routes/auth.ts
+    evidence_source: route unit tests (identical 202 response body assertion)
+    implementing_story_ref: WO-020
+    status: implemented
+
+  - control_id: BR-19-PII-REDACTION
+    framework: GDPR
+    description: >
+      BR-19: PII (email, DOB, passport, auth headers) must be redacted from
+      all application log output; raw PII must never appear in error messages
+      or stack traces.
+    owning_role: Platform Engineering Lead
+    implementing_component:
+      - packages/observability/src/logger.ts
+    evidence_source: >
+      observability/__tests__/logger.test.ts (negative PII assertions),
+      CloudWatch log samples
+    implementing_story_ref: WO-006
+    status: implemented
