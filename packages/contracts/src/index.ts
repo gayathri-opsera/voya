@@ -136,3 +136,49 @@ export type {
   GovernanceError,
   CategoryAnnotation,
 } from './governance/prompt-safety.js';
+
+// ---------------------------------------------------------------------------
+// Supplier: capability manifest — schema, types, enums, registry helpers
+// ---------------------------------------------------------------------------
+
+export {
+  CancellationSemanticsEnum,
+  CancellationSemantics,
+  RefundSemanticsEnum,
+  RefundSemantics,
+  SupplierOperationEnum,
+  SupplierOperation,
+  SupplierCertificationStatusEnum,
+  SupplierCertificationStatus,
+  FixtureEvidenceSchema,
+  SupplierCapabilityManifestSchema,
+  validateManifest,
+  isExemptPublicLandmark,
+} from './supplier/capability-manifest.js';
+
+export type {
+  CancellationSemantics as CancellationSemanticsType,
+  RefundSemantics as RefundSemanticsType,
+  SupplierOperation as SupplierOperationType,
+  SupplierCertificationStatus as SupplierCertificationStatusType,
+  FixtureEvidence,
+  SupplierCapabilityManifest,
+  ManifestValidationError,
+} from './supplier/capability-manifest.js';
+
+// ---------------------------------------------------------------------------
+// Supplier: freshness window helpers — types and functions
+// ---------------------------------------------------------------------------
+
+export {
+  getAvailabilityMaxAgeSeconds,
+  getRateMaxAgeSeconds,
+  isAvailabilityStale,
+  isRateStale,
+  evaluateFreshness,
+} from './supplier/freshness-window.js';
+
+export type {
+  FreshnessGrade,
+  FreshnessWindowInput,
+} from './supplier/freshness-window.js';

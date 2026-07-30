@@ -14,3 +14,10 @@
 - **Files:** 8 (+2329/-0)
 - **Duration:** 873ss
 - **Approach:** Added a governance sub-module to the @voya/contracts package. data-classification.ts defines DataCategoryKeyEnum (12 launch categories), DataCategoryEntrySchema with tier/promptEligible/requiresEncryption/requiresLogMasking/requiresNonProdAnonymization/retentionPolicyKey, DATA_CATEGORY_REGISTRY, lookupDataCategory(), and validateDataCategoryEntry() enforcing RESTRICTED-tier invariants and CONFIDENTIAL/RESTRICTED → not-prompt-eligible rules. retention-policy.ts defines RetentionApprovalStatus (PROVISIONAL/APPROVED), RetentionPurgeAction (DELETE/ANONYMIZE/ARCHIVE), RetentionPolicySchema with required eventAnchor (missing anchor = Zod validation error, enforcing the ambiguous-purge-timing edge case), RETENTION_POLICY_REGISTRY with 11 policies all marked PROVISIONAL, parseRetentionPolicy(), lookupRetentionPolicy(). prompt-safety.ts defines .strict() GovernanceErrorSchema (no sensitive values in errors), validatePromptCategories(), isPromptSafe(), assertPromptSafe(), PromptSafetyViolationError. All symbols exported from index.ts following the existing value/type/schema pattern.
+
+## WO-485: User Story: WO-485 - Model Supplier Capability Manifests
+- **Status:** completed
+- **Commit:** `42e6c4c`
+- **Files:** 7 (+1870/-0)
+- **Duration:** 730ss
+- **Approach:** Added a supplier sub-module to @voya/contracts with Zod-validated SupplierCapabilityManifest schema, deterministic freshness window helpers, contract-level test fixtures for HVMI/Marriott brand/Amadeus/Bonvoy Tours/public landmark, and Vitest suites covering validation rules and freshness grades. All symbols follow the existing value/type/schema export pattern in index.ts. FixtureEvidence uses .strict() to block raw logs or credentials. validateManifest enforces four rules: FULLY_BOOKABLE requires CERTIFIED status and passing book+cancel fixture; DEEP_LINK_ONLY forbids checkout operations; EXEMPT_PUBLIC must not be priced or FULLY_BOOKABLE; priced manifests must declare rateRefreshLatencySeconds. evaluateFreshness returns UNRATABLE for priced manifests missing the rate latency field, preventing false FRESH grades.
