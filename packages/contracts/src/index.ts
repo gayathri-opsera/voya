@@ -182,3 +182,60 @@ export type {
   FreshnessGrade,
   FreshnessWindowInput,
 } from './supplier/freshness-window.js';
+
+// ---------------------------------------------------------------------------
+// Audit: actor model, event schema, redaction — schemas, types, helpers
+// ---------------------------------------------------------------------------
+
+export {
+  AuditActorTypeEnum,
+  AuditActorType,
+  AuditActorSchema,
+  ResourceRefSchema,
+  RedactionMetaSchema,
+  AuditEventSchema,
+  RESTRICTED_FIELD_NAMES,
+  RESOURCE_TYPES,
+  parseAuditEvent,
+  validateEventDetails,
+} from './audit/audit-event.js';
+
+export type {
+  AuditActorType as AuditActorTypeType,
+  AuditActor,
+  ResourceType,
+  ResourceRef,
+  RedactionMeta,
+  AuditEvent,
+} from './audit/audit-event.js';
+
+// ---------------------------------------------------------------------------
+// Audit: event type registry — metadata, categories, helpers
+// ---------------------------------------------------------------------------
+
+export {
+  AUDIT_EVENT_CATEGORY,
+  AUDIT_EVENT_TYPE_REGISTRY,
+  getAuditEventTypeMetadata,
+  getHighSeverityEventTypes,
+  getEventTypesByCategory,
+} from './audit/audit-event-types.js';
+
+export type {
+  AuditEventCategory,
+  AuditEventTypeMetadata,
+} from './audit/audit-event-types.js';
+
+// ---------------------------------------------------------------------------
+// Audit: canonicalization — deterministic hash input helpers
+// ---------------------------------------------------------------------------
+
+export {
+  CanonicalizationError,
+  canonicalizeObject,
+  buildAuditHashInput,
+} from './audit/canonicalize.js';
+
+export type {
+  AuditEventHashInputFields,
+} from './audit/canonicalize.js';

@@ -136,13 +136,24 @@ export const AuditEventTypeEnum = z.enum([
   'SOURCING_ORDER',                // HVMI queried first; order of connectors recorded
   'BRAND_FALLBACK_DISCLOSURE',     // Brand inventory used after HVMI had no eligible results
   'SUPPLIER_EXCLUSION',            // Uncertified supplier dropped from response path
+  'MANIFEST_EXCLUSION',            // Supplier excluded via capability manifest policy
   'SAFETY_GATE_DECISION',          // Destination cleared or blocked
+  'PROMPT_SAFETY_REJECTION',       // Prompt blocked by safety gate (detailed rejection record)
   'RECEIPT_ISSUED',                // Trip Confidence Receipt produced and persisted
   'RECEIPT_STALE_BLOCKED',         // Receipt failed the freshness re-check at checkout
+  'RECEIPT_BLOCKED',               // Receipt blocked for non-freshness policy reason
   'LOYALTY_SIMULATED_DEBIT',       // Pseudo-redemption recorded (no real balance changed)
+  'LOYALTY_SIMULATED_QUOTE',       // Simulated points quote produced (no real balance read)
+  'LOYALTY_SIMULATED_HOLD',        // Simulated points hold placed (no real balance frozen)
+  'LOYALTY_SIMULATED_COMMIT',      // Simulated points commit recorded (no real debit)
+  'LOYALTY_SIMULATED_REVERSAL',    // Simulated points reversal recorded (no real credit)
   'CHECKOUT_AUTHORISATION_TAKEN',  // Payment Intent authorised
   'CHECKOUT_COMPENSATED',          // Saga compensation executed after partial failure
+  'CHECKOUT_STATE_TRANSITION',     // Checkout state machine transitioned
   'ITINERARY_PRESENTED',           // Itinerary surfaced to traveller
+  'AUTHENTICATION_EVENT',          // Traveller authenticated or de-authenticated
+  'RETENTION_DECISION',            // Data retention policy decision recorded
+  'ADMIN_APPROVAL_EVIDENCE',       // Administrative approval evidence captured
 ]);
 export type AuditEventType = z.infer<typeof AuditEventTypeEnum>;
 export const AuditEventType = AuditEventTypeEnum.enum;

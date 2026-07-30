@@ -82,13 +82,36 @@ enum AuditEventType {
   SOURCING_ORDER
   BRAND_FALLBACK_DISCLOSURE
   SUPPLIER_EXCLUSION
+  MANIFEST_EXCLUSION
   SAFETY_GATE_DECISION
+  PROMPT_SAFETY_REJECTION
   RECEIPT_ISSUED
   RECEIPT_STALE_BLOCKED
+  RECEIPT_BLOCKED
   LOYALTY_SIMULATED_DEBIT
+  LOYALTY_SIMULATED_QUOTE
+  LOYALTY_SIMULATED_HOLD
+  LOYALTY_SIMULATED_COMMIT
+  LOYALTY_SIMULATED_REVERSAL
   CHECKOUT_AUTHORISATION_TAKEN
   CHECKOUT_COMPENSATED
+  CHECKOUT_STATE_TRANSITION
   ITINERARY_PRESENTED
+  AUTHENTICATION_EVENT
+  RETENTION_DECISION
+  ADMIN_APPROVAL_EVIDENCE
+}
+
+enum AuditActorType {
+  TRAVELLER_AUTHENTICATED
+  TRAVELLER_GUEST
+  SERVICE_PRINCIPAL
+  AGENT_PRINCIPAL
+  CUSTOMER_CARE_OPERATOR
+  LOYALTY_ADMINISTRATOR
+  MERCHANDISER
+  FRAUD_ANALYST
+  SYSTEM_PROCESS
 }
 
 enum TravellerIdentityType {
@@ -458,4 +481,35 @@ model RetentionPolicyMetadata {
   updatedAt          DateTime               @updatedAt
 
   @@map("retention_policy_metadata")
+}
+
+// ---------------------------------------------------------------------------
+// AuditLedger
+// Append-only audit ledger with structured, redacted payloads and a
+// canonical integrity hash. No UPDATE or DELETE operations are supported
+// by application contract. The canonical hash is produced from deterministically
+// ordered event identity fields (see @voya/contracts canonicalize.ts).
+// actorRef and resourceRef are tokenized references — never raw PII.
+// ---------------------------------------------------------------------------
+
+model AuditLedger {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventType            AuditEventType
+  actorType            AuditActorType
+  actorRef             String
+  resourceType         String
+  resourceRef          String
+  occurredAt           DateTime
+  correlationId        String
+  classificationTier   DataClassificationTier @default(INTERNAL)
+  redactedPayloadJson  Json
+  canonicalHash        String
+  createdAt            DateTime               @default(now())
+
+  @@index([eventType])
+  @@index([resourceRef])
+  @@index([actorRef])
+  @@index([occurredAt])
+  @@index([correlationId])
+  @@map("audit_ledger")
 }

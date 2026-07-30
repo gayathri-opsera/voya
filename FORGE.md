@@ -35,3 +35,10 @@
 - **Files:** 25 (+2219/-0)
 - **Duration:** 755ss
 - **Approach:** Created the @voya/design-tokens workspace package from scratch. Six primitive token modules (colors, typography, spacing, radii, elevation, motion) supply raw values that are referenced only internally. The SemanticTokenKey union type is the sole public naming surface — any invalid reference fails the TypeScript build before CI runs. The SemanticTokenMap type (Record<SemanticTokenKey,string>) is implemented by lightTheme (default) and darkTheme (provisional scaffold). CSS custom property generation converts keys to --voya-{category}-{subcategory}-{name} format. WCAG utilities implement the IEC 61966-2-1 linearization and WCAG 2.1 contrast ratio formula. The manifest builder emits sorted {key,cssVar,value} entries for tooling consumption. All 25 files are committed in a single commit.
+
+## WO-486: User Story: WO-486 - Specify Audit Ledger Contracts
+- **Status:** completed
+- **Commit:** `ebdaf2e`
+- **Files:** 10 (+1909/-0)
+- **Duration:** 569ss
+- **Approach:** Added the audit sub-module to @voya/contracts with three source files: audit-event.ts defines AuditActorTypeEnum (9 types), AuditActorSchema, ResourceRefSchema, RedactionMetaSchema, AuditEventSchema (with .strict() and a superRefine that blocks restricted field names in eventDetails), parseAuditEvent(), and validateEventDetails(). audit-event-types.ts provides AUDIT_EVENT_TYPE_REGISTRY with metadata (category, description, severity, validActorTypes) for every AuditEventType value, plus helper functions. canonicalize.ts implements canonicalizeObject() — recursive stable key sorting, CanonicalizationError for all non-JSON-safe types (undefined/function/symbol/bigint/NaN/Infinity/circular), and buildAuditHashInput() for audit integrity hash input production. AuditEventTypeEnum in enums.ts was extended with 11 new governance event types. prisma/schema.prisma was extended with AuditActorType enum, updated AuditEventType, and AuditLedger model (append-only, no updatedAt). Migration 000002 creates the AuditActorType enum, extends AuditEventType via ALTER TYPE ADD VALUE, and creates the audit_ledger table with 5 indexes.
