@@ -1,20 +1,12 @@
 {
   "name": "voya",
   "private": true,
-  "version": "0.0.0",
-  "description": "Voya dual-mode vacation booking platform",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present"
-  },
-  "devDependencies": {
-    "typescript": "^5.4.5"
-  },
-  "engines": {
-    "node": ">=20.0.0"
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
   }
 }
