@@ -80,6 +80,9 @@ function makeDb(
       },
       async findUnique() { return null; },
       async update() { return null as never; },
+      async updateAtomic() { return null; },
+      async revokeFamily() { return 0; },
+      async deleteExpired() { return 0; },
     },
     credential: {
       async create() { return null as never; },

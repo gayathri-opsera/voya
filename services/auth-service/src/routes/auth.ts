@@ -8,6 +8,7 @@ import { z } from "zod";
 import type { RegistrationService } from "../services/registrationService.js";
 import { PolicyViolationError } from "../services/registrationService.js";
 import type { LoginService } from "../services/loginService.js";
+import type { RefreshService } from "../services/refreshService.js";
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -29,6 +30,13 @@ const LoginSchema = z.object({
   email: z.string().email().max(320),
   password: z.string().min(1).max(1024),
 }).strict();
+
+const RefreshBodySchema = z.object({
+  refreshToken: z.string().min(1).max(512),
+}).strict();
+
+const REFRESH_COOKIE_NAME = process.env.REFRESH_COOKIE_NAME ?? "refresh_token";
+const COOKIE_SECURE = process.env.NODE_ENV === "production";
 
 const GENERIC_202 = { message: "If the address is valid you will receive a verification email." };
 
@@ -69,6 +77,7 @@ function isRateLimited(key: string): { limited: boolean; retryAfterSeconds: numb
 export function createAuthRouter(
   registrationService: RegistrationService,
   loginService?: LoginService,
+  refreshService?: RefreshService,
 ): Router {
   const router = Router();
 
@@ -210,6 +219,66 @@ export function createAuthRouter(
     };
 
     router.post("/login", login);
+  }
+
+  if (refreshService) {
+    const refresh: RequestHandler = async (req, res, next) => {
+      try {
+        const ip = String(req.ip ?? req.socket.remoteAddress ?? "");
+
+        // Accept refresh token from HttpOnly cookie OR request body
+        const cookieToken = (req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE_NAME];
+        let rawToken = cookieToken;
+
+        if (!rawToken) {
+          const parsed = RefreshBodySchema.safeParse(req.body);
+          if (!parsed.success) {
+            res.status(401).json({ error: { code: "invalid_refresh_token" } });
+            return;
+          }
+          rawToken = parsed.data.refreshToken;
+        }
+
+        const result = await refreshService.refresh({
+          refreshToken: rawToken,
+          userAgent: req.headers["user-agent"],
+          ipAddress: ip,
+        });
+
+        switch (result.outcome) {
+          case "success":
+            // Set rotated refresh cookie for browser clients
+            res.cookie(REFRESH_COOKIE_NAME, result.refreshToken, {
+              httpOnly: true,
+              secure: COOKIE_SECURE,
+              sameSite: "strict",
+              path: "/auth/refresh",
+              maxAge: 14 * 24 * 3600 * 1000,
+            });
+            res.status(200).json({
+              accessToken: result.accessToken,
+              tokenType: result.tokenType,
+              expiresIn: result.expiresIn,
+              // Also return in body for non-browser clients
+              refreshToken: result.refreshToken,
+            });
+            break;
+          case "invalid_refresh_token":
+            res.status(401).json({ error: { code: "invalid_refresh_token" } });
+            break;
+          case "refresh_token_reused":
+            res.status(401).json({ error: { code: "refresh_token_reused" } });
+            break;
+          case "session_expired":
+            res.status(401).json({ error: { code: "session_expired" } });
+            break;
+        }
+      } catch (err) {
+        next(err);
+      }
+    };
+
+    router.post("/refresh", refresh);
   }
 
   return router;

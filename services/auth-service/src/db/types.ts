@@ -37,6 +37,10 @@ export interface SessionRow {
   expiresAt: Date;
   revokedAt: Date | null;
   rotatedFromSessionId: string | null;
+  /** Rotation-family root identifier (copied verbatim on every rotation) */
+  familyId: string;
+  /** Hard ceiling — never extended by rotation */
+  absoluteExpiresAt: Date;
 }
 
 export interface DbUserDelegate {
@@ -49,6 +53,12 @@ export interface DbSessionDelegate {
   create(args: { data: Partial<SessionRow> }): Promise<SessionRow>;
   findUnique(args: { where: { id?: string; refreshTokenHash?: string } }): Promise<SessionRow | null>;
   update(args: { where: { id: string }; data: Partial<SessionRow> }): Promise<SessionRow>;
+  /** Atomic conditional update: sets revokedAt only if currently null. Returns updated row or null (already revoked). */
+  updateAtomic(args: { where: { id: string }; data: Partial<SessionRow> }): Promise<SessionRow | null>;
+  /** Revoke every active session in a family. */
+  revokeFamily(args: { familyId: string }): Promise<number>;
+  /** Batch-delete expired and long-revoked sessions. Returns deleted count. */
+  deleteExpired(args: { before: Date; revokedBefore?: Date; limit?: number }): Promise<number>;
 }
 
 export interface DbCredentialDelegate {

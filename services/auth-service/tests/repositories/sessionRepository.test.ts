@@ -51,6 +51,14 @@ function makeDbMock(): DbClient {
         Object.assign(row, data);
         return row as never;
       },
+      async updateAtomic({ where, data }) {
+        const row = store.get(where.id);
+        if (!row || (row as Record<string, unknown>)["revokedAt"] !== null) return null;
+        Object.assign(row, data);
+        return row as never;
+      },
+      async revokeFamily() { return 0; },
+      async deleteExpired() { return 0; },
     },
     credential: {
       async create() { return null as never; },
