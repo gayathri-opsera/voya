@@ -1,0 +1,156 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "avatarUrl": {
+      "format": "uri",
+      "type": "string"
+    },
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "dateOfBirth": {
+      "type": "string"
+    },
+    "email": {
+      "format": "email",
+      "type": "string"
+    },
+    "emailVerified": {
+      "type": "boolean"
+    },
+    "firstName": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "lastName": {
+      "maxLength": 100,
+      "minLength": 1,
+      "type": "string"
+    },
+    "nationality": {
+      "pattern": "^[A-Z]{2}$",
+      "type": "string"
+    },
+    "passportExpiryDate": {
+      "type": "string"
+    },
+    "passportNumber": {
+      "pattern": "^[A-Z0-9]{6,20}$",
+      "type": "string"
+    },
+    "phoneNumber": {
+      "pattern": "^\\+?[0-9\\s\\-().]{7,20}$",
+      "type": "string"
+    },
+    "preferences": {
+      "additionalProperties": false,
+      "properties": {
+        "accessibilityNeeds": {
+          "items": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "maxItems": 10,
+          "type": "array"
+        },
+        "dietaryRequirements": {
+          "items": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "maxItems": 10,
+          "type": "array"
+        },
+        "loyaltyPrograms": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "memberId": {
+                "maxLength": 100,
+                "type": "string"
+              },
+              "program": {
+                "maxLength": 100,
+                "type": "string"
+              }
+            },
+            "required": [
+              "program",
+              "memberId"
+            ],
+            "type": "object"
+          },
+          "maxItems": 20,
+          "type": "array"
+        },
+        "newsletterOptIn": {
+          "default": false,
+          "type": "boolean"
+        },
+        "preferredCarClass": {
+          "enum": [
+            "ECONOMY",
+            "COMPACT",
+            "MIDSIZE",
+            "PREMIUM",
+            "SUV"
+          ],
+          "type": "string"
+        },
+        "preferredCurrency": {
+          "pattern": "^[A-Z]{3}$",
+          "type": "string"
+        },
+        "preferredHotelStarRating": {
+          "enum": [
+            3,
+            4,
+            5
+          ],
+          "type": "number"
+        },
+        "preferredSeatClass": {
+          "enum": [
+            "ECONOMY",
+            "PREMIUM_ECONOMY",
+            "BUSINESS",
+            "FIRST"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "role": {
+      "enum": [
+        "traveler",
+        "support_agent",
+        "system"
+      ],
+      "type": "string"
+    },
+    "updatedAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "userId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "userId",
+    "email",
+    "firstName",
+    "lastName",
+    "role",
+    "emailVerified",
+    "createdAt",
+    "updatedAt"
+  ],
+  "type": "object"
+}

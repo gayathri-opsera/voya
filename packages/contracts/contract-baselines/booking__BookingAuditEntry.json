@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "enum": [
+        "CREATED",
+        "CONFIRMED",
+        "CANCELLED",
+        "EXPIRED",
+        "REFUNDED",
+        "MODIFIED"
+      ],
+      "type": "string"
+    },
+    "actorId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "actorRole": {
+      "type": "string"
+    },
+    "auditId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "bookingId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "correlationId": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "metadata": {
+      "additionalProperties": {},
+      "type": "object"
+    }
+  },
+  "required": [
+    "auditId",
+    "bookingId",
+    "action",
+    "actorId",
+    "actorRole",
+    "correlationId",
+    "createdAt"
+  ],
+  "type": "object"
+}

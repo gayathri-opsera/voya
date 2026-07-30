@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "email": {
+      "format": "email",
+      "type": "string"
+    },
+    "exp": {
+      "type": "integer"
+    },
+    "iat": {
+      "type": "integer"
+    },
+    "role": {
+      "enum": [
+        "traveler",
+        "support_agent",
+        "system"
+      ],
+      "type": "string"
+    },
+    "sessionId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "userId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "userId",
+    "role",
+    "sessionId",
+    "email",
+    "iat",
+    "exp"
+  ],
+  "type": "object"
+}

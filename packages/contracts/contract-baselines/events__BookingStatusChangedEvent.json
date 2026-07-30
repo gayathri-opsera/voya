@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "actorId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "bookingId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "correlationId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]+$",
+      "type": "string"
+    },
+    "eventId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "fromStatus": {
+      "enum": [
+        "PENDING",
+        "CONFIRMED",
+        "CANCELLED",
+        "EXPIRED"
+      ],
+      "type": "string"
+    },
+    "occurredAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "reason": {
+      "maxLength": 500,
+      "type": "string"
+    },
+    "toStatus": {
+      "enum": [
+        "PENDING",
+        "CONFIRMED",
+        "CANCELLED",
+        "EXPIRED"
+      ],
+      "type": "string"
+    },
+    "type": {
+      "const": "booking.status_changed",
+      "type": "string"
+    },
+    "userId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "version": {
+      "const": "1.0",
+      "type": "string"
+    }
+  },
+  "required": [
+    "correlationId",
+    "eventId",
+    "occurredAt",
+    "version",
+    "type",
+    "bookingId",
+    "userId",
+    "fromStatus",
+    "toStatus",
+    "actorId"
+  ],
+  "type": "object"
+}

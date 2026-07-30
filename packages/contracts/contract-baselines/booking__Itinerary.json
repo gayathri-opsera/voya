@@ -1,0 +1,329 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "createdAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "currency": {
+      "allOf": [
+        {
+          "type": "string"
+        },
+        {
+          "pattern": "^[A-Z]{3}$",
+          "type": "string"
+        }
+      ]
+    },
+    "items": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "bookingId": {
+            "minLength": 1,
+            "pattern": "^[0-9A-Za-z_-]{10,128}$",
+            "type": "string"
+          },
+          "bookingType": {
+            "enum": [
+              "FLIGHT",
+              "HOTEL",
+              "CAR"
+            ],
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "allOf": [
+              {
+                "type": "string"
+              },
+              {
+                "pattern": "^[A-Z]{3}$",
+                "type": "string"
+              }
+            ]
+          },
+          "itemId": {
+            "minLength": 1,
+            "pattern": "^[0-9A-Za-z_-]{10,128}$",
+            "type": "string"
+          },
+          "offer": {
+            "additionalProperties": false,
+            "properties": {
+              "bookable": {
+                "type": "boolean"
+              },
+              "currency": {
+                "allOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "pattern": "^[A-Z]{3}$",
+                    "type": "string"
+                  }
+                ]
+              },
+              "details": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "airline": {
+                        "type": "string"
+                      },
+                      "arrivalAirport": {
+                        "allOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "pattern": "^[A-Z]{3}$",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "arrivalTime": {
+                        "type": "string"
+                      },
+                      "departureAirport": {
+                        "allOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "pattern": "^[A-Z]{3}$",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "departureTime": {
+                        "type": "string"
+                      },
+                      "duration": {
+                        "type": "string"
+                      },
+                      "flightNumber": {
+                        "type": "string"
+                      },
+                      "seatClass": {
+                        "enum": [
+                          "ECONOMY",
+                          "PREMIUM_ECONOMY",
+                          "BUSINESS",
+                          "FIRST"
+                        ],
+                        "type": "string"
+                      },
+                      "stops": {
+                        "minimum": 0,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "departureAirport",
+                      "arrivalAirport",
+                      "seatClass"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "address": {
+                        "type": "string"
+                      },
+                      "amenities": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "breakfastIncluded": {
+                        "type": "boolean"
+                      },
+                      "hotelName": {
+                        "type": "string"
+                      },
+                      "roomType": {
+                        "type": "string"
+                      },
+                      "starRating": {
+                        "enum": [
+                          3,
+                          4,
+                          5
+                        ],
+                        "type": "number"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "carClass": {
+                        "enum": [
+                          "ECONOMY",
+                          "COMPACT",
+                          "MIDSIZE",
+                          "PREMIUM",
+                          "SUV"
+                        ],
+                        "type": "string"
+                      },
+                      "make": {
+                        "type": "string"
+                      },
+                      "model": {
+                        "type": "string"
+                      },
+                      "seats": {
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      "transmission": {
+                        "enum": [
+                          "AUTOMATIC",
+                          "MANUAL"
+                        ],
+                        "type": "string"
+                      },
+                      "unlimitedMileage": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "carClass"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              "expiresAt": {
+                "format": "date-time",
+                "type": "string"
+              },
+              "freshness": {
+                "enum": [
+                  "FRESH",
+                  "STALE",
+                  "EXPIRED"
+                ],
+                "type": "string"
+              },
+              "id": {
+                "minLength": 1,
+                "pattern": "^[0-9A-Za-z_-]{10,128}$",
+                "type": "string"
+              },
+              "price": {
+                "pattern": "^\\d+(\\.\\d{1,2})?$",
+                "type": "string"
+              },
+              "provenance": {
+                "enum": [
+                  "AMADEUS",
+                  "RAPIDAPI",
+                  "ILLUSTRATIVE"
+                ],
+                "type": "string"
+              },
+              "rating": {
+                "maximum": 5,
+                "minimum": 0,
+                "type": "number"
+              },
+              "reviews": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "title": {
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "provenance",
+              "bookable",
+              "title",
+              "price",
+              "currency",
+              "details",
+              "expiresAt",
+              "freshness"
+            ],
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "CONFIRMED",
+              "CANCELLED",
+              "EXPIRED"
+            ],
+            "type": "string"
+          },
+          "totalAmount": {
+            "pattern": "^\\d+(\\.\\d{1,2})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId",
+          "bookingId",
+          "bookingType",
+          "status",
+          "offer",
+          "totalAmount",
+          "currency",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "itineraryId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 200,
+      "minLength": 1,
+      "type": "string"
+    },
+    "totalAmount": {
+      "pattern": "^\\d+(\\.\\d{1,2})?$",
+      "type": "string"
+    },
+    "updatedAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "userId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "itineraryId",
+    "userId",
+    "title",
+    "items",
+    "totalAmount",
+    "currency",
+    "createdAt",
+    "updatedAt"
+  ],
+  "type": "object"
+}

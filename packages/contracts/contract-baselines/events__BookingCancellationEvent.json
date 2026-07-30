@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "bookingId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "bookingReference": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "bookingType": {
+      "enum": [
+        "FLIGHT",
+        "HOTEL",
+        "CAR"
+      ],
+      "type": "string"
+    },
+    "cancelledAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "contactEmail": {
+      "format": "email",
+      "type": "string"
+    },
+    "correlationId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]+$",
+      "type": "string"
+    },
+    "eventId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "occurredAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "reason": {
+      "maxLength": 500,
+      "minLength": 1,
+      "type": "string"
+    },
+    "refundEligible": {
+      "type": "boolean"
+    },
+    "type": {
+      "const": "booking.cancelled",
+      "type": "string"
+    },
+    "userId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "version": {
+      "const": "1.0",
+      "type": "string"
+    }
+  },
+  "required": [
+    "correlationId",
+    "eventId",
+    "occurredAt",
+    "version",
+    "type",
+    "bookingId",
+    "bookingReference",
+    "userId",
+    "contactEmail",
+    "bookingType",
+    "reason",
+    "cancelledAt",
+    "refundEligible"
+  ],
+  "type": "object"
+}
