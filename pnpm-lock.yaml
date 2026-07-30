@@ -151,6 +151,18 @@ importers:
         specifier: 'catalog:'
         version: 2.1.9(@types/node@20.19.43)(supports-color@8.1.1)
 
+  packages/rbac:
+    devDependencies:
+      '@types/node':
+        specifier: ^20.17.0
+        version: 20.19.43
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 2.1.9(@types/node@20.19.43)(supports-color@8.1.1)
+
   packages/shared:
     dependencies:
       '@travel/contracts':
@@ -439,6 +451,28 @@ importers:
       vitest:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.1)(supports-color@8.1.1)
+
+  services/notification-service:
+    dependencies:
+      '@travel/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@travel/observability':
+        specifier: workspace:*
+        version: link:../../packages/observability
+      '@travel/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
+    devDependencies:
+      '@types/node':
+        specifier: ^20.17.0
+        version: 20.19.43
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 2.1.9(@types/node@20.19.43)(supports-color@8.1.1)
 
   services/payment-service:
     dependencies:
