@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "channel": {
+      "enum": [
+        "EMAIL",
+        "SMS",
+        "PUSH"
+      ],
+      "type": "string"
+    },
+    "correlationId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]+$",
+      "type": "string"
+    },
+    "eventId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "occurredAt": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "priority": {
+      "default": "NORMAL",
+      "enum": [
+        "HIGH",
+        "NORMAL",
+        "LOW"
+      ],
+      "type": "string"
+    },
+    "recipient": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "templateId": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "type": {
+      "const": "notification.send",
+      "type": "string"
+    },
+    "userId": {
+      "minLength": 1,
+      "pattern": "^[0-9A-Za-z_-]{10,128}$",
+      "type": "string"
+    },
+    "version": {
+      "const": "1.0",
+      "type": "string"
+    }
+  },
+  "required": [
+    "correlationId",
+    "eventId",
+    "occurredAt",
+    "version",
+    "type",
+    "userId",
+    "channel",
+    "templateId",
+    "recipient",
+    "payload"
+  ],
+  "type": "object"
+}
