@@ -108,3 +108,50 @@ describe("0001_identity_schema rollback migration", () => {
     expect(sql).toContain("CASCADE");
   });
 });
+
+// ─── 0002_verification_tokens migration ──────────────────────────────────────
+
+const MIGRATION_DIR_002 = join(__dirname, "../../prisma/migrations/0002_verification_tokens");
+
+describe("0002_verification_tokens forward migration", () => {
+  const sql = readFileSync(join(MIGRATION_DIR_002, "migration.sql"), "utf-8");
+
+  it("creates TokenPurpose enum", () => {
+    expect(sql).toContain(`CREATE TYPE "TokenPurpose"`);
+    expect(sql).toContain("email_verification");
+    expect(sql).toContain("password_reset");
+  });
+
+  it("creates verification_tokens table", () => {
+    expect(sql).toContain(`CREATE TABLE "verification_tokens"`);
+  });
+
+  it("has token_hash unique constraint", () => {
+    expect(sql).toContain("UNIQUE");
+    expect(sql).toContain("token_hash");
+  });
+
+  it("has foreign key to users with CASCADE delete", () => {
+    expect(sql).toContain("FOREIGN KEY");
+    expect(sql).toContain("CASCADE");
+  });
+
+  it("creates indexes on user_id and expires_at", () => {
+    expect(sql).toContain("user_id_idx");
+    expect(sql).toContain("expires_at_idx");
+  });
+});
+
+describe("0002_verification_tokens rollback migration", () => {
+  const sql = readFileSync(join(MIGRATION_DIR_002, "rollback.sql"), "utf-8");
+
+  it("drops verification_tokens table", () => {
+    expect(sql).toContain(`DROP TABLE`);
+    expect(sql).toContain("verification_tokens");
+  });
+
+  it("drops TokenPurpose enum", () => {
+    expect(sql).toContain("DROP TYPE");
+    expect(sql).toContain("TokenPurpose");
+  });
+});

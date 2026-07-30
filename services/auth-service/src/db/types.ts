@@ -51,7 +51,14 @@ export interface DbSessionDelegate {
   update(args: { where: { id: string }; data: Partial<SessionRow> }): Promise<SessionRow>;
 }
 
+export interface DbCredentialDelegate {
+  create(args: { data: Partial<CredentialRow> }): Promise<CredentialRow>;
+  findFirst(args: { where: Partial<CredentialRow> }): Promise<CredentialRow | null>;
+  update(args: { where: { id: string }; data: Partial<CredentialRow> }): Promise<CredentialRow>;
+}
+
 export interface DbClient {
   user: DbUserDelegate;
   session: DbSessionDelegate;
+  credential: DbCredentialDelegate;
 }

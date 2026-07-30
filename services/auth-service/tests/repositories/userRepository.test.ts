@@ -54,6 +54,11 @@ function makeDbMock(): DbClient {
       async findUnique() { return null; },
       async update() { return null as never; },
     },
+    credential: {
+      async create() { return null as never; },
+      async findFirst() { return null; },
+      async update() { return null as never; },
+    },
   };
 }
 
