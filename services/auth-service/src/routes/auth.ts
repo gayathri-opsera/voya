@@ -9,6 +9,8 @@ import type { RegistrationService } from "../services/registrationService.js";
 import { PolicyViolationError } from "../services/registrationService.js";
 import type { LoginService } from "../services/loginService.js";
 import type { RefreshService } from "../services/refreshService.js";
+import type { SessionService } from "../services/sessionService.js";
+import type { PasswordResetService } from "../services/passwordResetService.js";
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -37,6 +39,13 @@ const RefreshBodySchema = z.object({
 
 const REFRESH_COOKIE_NAME = process.env.REFRESH_COOKIE_NAME ?? "refresh_token";
 const COOKIE_SECURE = process.env.NODE_ENV === "production";
+
+const CLEAR_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: COOKIE_SECURE,
+  sameSite: "strict" as const,
+  path: "/auth/refresh",
+};
 
 const GENERIC_202 = { message: "If the address is valid you will receive a verification email." };
 
@@ -78,6 +87,9 @@ export function createAuthRouter(
   registrationService: RegistrationService,
   loginService?: LoginService,
   refreshService?: RefreshService,
+  sessionService?: SessionService,
+  passwordResetService?: PasswordResetService,
+  authMiddleware?: RequestHandler,
 ): Router {
   const router = Router();
 
@@ -279,6 +291,132 @@ export function createAuthRouter(
     };
 
     router.post("/refresh", refresh);
+  }
+
+  // ─── Session management (requires auth) ─────────────────────────────────────
+
+  if (sessionService && authMiddleware) {
+    const logout: RequestHandler = async (req, res, next) => {
+      try {
+        const sessionId = req.principal?.sessionId;
+        if (sessionId) await sessionService.revokeById(sessionId);
+        res.clearCookie(REFRESH_COOKIE_NAME, CLEAR_COOKIE_OPTIONS);
+        res.status(204).send();
+      } catch (err) {
+        next(err);
+      }
+    };
+
+    const logoutAll: RequestHandler = async (req, res, next) => {
+      try {
+        const userId = req.principal!.userId;
+        const count = await sessionService.revokeAllForUser(userId);
+        res.clearCookie(REFRESH_COOKIE_NAME, CLEAR_COOKIE_OPTIONS);
+        res.status(200).json({ revokedCount: count });
+      } catch (err) {
+        next(err);
+      }
+    };
+
+    const listSessions: RequestHandler = async (req, res, next) => {
+      try {
+        const { userId, sessionId } = req.principal!;
+        const sessions = await sessionService.listActiveForUser(userId, sessionId);
+        res.status(200).json({ sessions });
+      } catch (err) {
+        next(err);
+      }
+    };
+
+    const revokeSession: RequestHandler = async (req, res, next) => {
+      try {
+        const { id } = req.params;
+        if (!id) { res.status(400).json({ error: { code: "bad_request" } }); return; }
+        const result = await sessionService.revokeForUser(id, req.principal!.userId);
+        if (result === "not_found") {
+          res.status(404).json({ error: { code: "session_not_found" } });
+          return;
+        }
+        if (req.principal?.sessionId === id) {
+          res.clearCookie(REFRESH_COOKIE_NAME, CLEAR_COOKIE_OPTIONS);
+        }
+        res.status(204).send();
+      } catch (err) {
+        next(err);
+      }
+    };
+
+    router.post("/logout", authMiddleware, logout);
+    router.post("/logout-all", authMiddleware, logoutAll);
+    router.get("/sessions", authMiddleware, listSessions);
+    router.delete("/sessions/:id", authMiddleware, revokeSession);
+  }
+
+  // ─── Password reset ──────────────────────────────────────────────────────────
+
+  if (passwordResetService) {
+    const ForgotPasswordSchema = z.object({ email: z.string().email().max(320) }).strict();
+    const ResetPasswordSchema = z.object({
+      token: z.string().min(1).max(512),
+      password: z.string().min(1).max(1024),
+    }).strict();
+
+    const RESET_GENERIC_202 = { message: "If the address is valid you will receive reset instructions." };
+
+    const forgotPassword: RequestHandler = async (req, res, next) => {
+      try {
+        const ip = String(req.ip ?? req.socket.remoteAddress ?? "");
+        const parsed = ForgotPasswordSchema.safeParse(req.body);
+        if (parsed.success) {
+          const key = `forgot:${parsed.data.email.toLowerCase()}:${ip}`;
+          const { limited, retryAfterSeconds } = isRateLimited(key);
+          if (limited) {
+            res.status(429).json({ error: { code: "rate_limited", retryAfterSeconds } });
+            return;
+          }
+          await passwordResetService.requestReset({ email: parsed.data.email });
+        }
+        res.status(202).json(RESET_GENERIC_202);
+      } catch (err) {
+        next(err);
+      }
+    };
+
+    const resetPassword: RequestHandler = async (req, res, next) => {
+      try {
+        const ip = String(req.ip ?? req.socket.remoteAddress ?? "");
+        const parsed = ResetPasswordSchema.safeParse(req.body);
+        if (!parsed.success) {
+          res.status(400).json({ error: { code: "invalid_or_expired_token" } });
+          return;
+        }
+
+        const key = `reset:${ip}`;
+        const { limited, retryAfterSeconds } = isRateLimited(key);
+        if (limited) {
+          res.status(429).json({ error: { code: "rate_limited", retryAfterSeconds } });
+          return;
+        }
+
+        const result = await passwordResetService.resetPassword(parsed.data);
+        if (!result.ok) {
+          if (result.reason === "invalid_or_expired_token") {
+            res.status(400).json({ error: { code: "invalid_or_expired_token" } });
+          } else if (result.reason === "password_reuse") {
+            res.status(422).json({ error: { code: "password_reuse_not_allowed" } });
+          } else {
+            res.status(422).json({ error: { code: "validation_failed" } });
+          }
+          return;
+        }
+        res.status(200).json({ reset: true });
+      } catch (err) {
+        next(err);
+      }
+    };
+
+    router.post("/forgot-password", forgotPassword);
+    router.post("/reset-password", resetPassword);
   }
 
   return router;

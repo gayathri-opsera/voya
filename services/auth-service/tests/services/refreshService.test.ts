@@ -76,6 +76,9 @@ function makeSessionStore() {
         }
         return count;
       },
+      async findMany({ where }: { where: { userId?: string } }) {
+        return [...store.values()].filter((r) => !where.userId || r.userId === where.userId);
+      },
     },
   };
 }

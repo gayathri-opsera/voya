@@ -59,6 +59,7 @@ function makeDbMock(): DbClient {
       },
       async revokeFamily() { return 0; },
       async deleteExpired() { return 0; },
+      async findMany() { return []; },
     },
     credential: {
       async create() { return null as never; },

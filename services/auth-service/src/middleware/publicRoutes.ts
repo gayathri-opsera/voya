@@ -11,6 +11,8 @@ export const PUBLIC_ROUTES: ReadonlySet<string> = new Set([
   "POST:/auth/resend-verification",
   "POST:/auth/login",
   "POST:/auth/refresh",
+  "POST:/auth/forgot-password",
+  "POST:/auth/reset-password",
   "GET:/health",
   "GET:/ready",
 ]);

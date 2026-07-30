@@ -52,6 +52,7 @@ export interface DbUserDelegate {
 export interface DbSessionDelegate {
   create(args: { data: Partial<SessionRow> }): Promise<SessionRow>;
   findUnique(args: { where: { id?: string; refreshTokenHash?: string } }): Promise<SessionRow | null>;
+  findMany(args: { where: { userId?: string } }): Promise<SessionRow[]>;
   update(args: { where: { id: string }; data: Partial<SessionRow> }): Promise<SessionRow>;
   /** Atomic conditional update: sets revokedAt only if currently null. Returns updated row or null (already revoked). */
   updateAtomic(args: { where: { id: string }; data: Partial<SessionRow> }): Promise<SessionRow | null>;

@@ -69,6 +69,7 @@ function makeDb(): DbClient & {
       async updateAtomic() { return null; },
       async revokeFamily() { return 0; },
       async deleteExpired() { return 0; },
+      async findMany() { return []; },
     },
   };
 }
