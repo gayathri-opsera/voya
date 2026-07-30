@@ -47,6 +47,16 @@
       "import": "./dist/errors/index.js",
       "require": "./dist/errors/index.cjs",
       "types": "./dist/errors/index.d.ts"
+    },
+    "./provenance": {
+      "import": "./src/provenance/index.ts",
+      "require": "./src/provenance/index.ts",
+      "types": "./src/provenance/index.ts"
+    },
+    "./audit": {
+      "import": "./src/audit/index.ts",
+      "require": "./src/audit/index.ts",
+      "types": "./src/audit/index.ts"
     }
   },
   "files": ["dist"],
