@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "accessibilityNeeds": {
+      "items": {
+        "maxLength": 200,
+        "type": "string"
+      },
+      "maxItems": 10,
+      "type": "array"
+    },
+    "dietaryRequirements": {
+      "items": {
+        "maxLength": 100,
+        "type": "string"
+      },
+      "maxItems": 10,
+      "type": "array"
+    },
+    "loyaltyPrograms": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "memberId": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "program": {
+            "maxLength": 100,
+            "type": "string"
+          }
+        },
+        "required": [
+          "program",
+          "memberId"
+        ],
+        "type": "object"
+      },
+      "maxItems": 20,
+      "type": "array"
+    },
+    "newsletterOptIn": {
+      "default": false,
+      "type": "boolean"
+    },
+    "preferredCarClass": {
+      "enum": [
+        "ECONOMY",
+        "COMPACT",
+        "MIDSIZE",
+        "PREMIUM",
+        "SUV"
+      ],
+      "type": "string"
+    },
+    "preferredCurrency": {
+      "pattern": "^[A-Z]{3}$",
+      "type": "string"
+    },
+    "preferredHotelStarRating": {
+      "enum": [
+        3,
+        4,
+        5
+      ],
+      "type": "number"
+    },
+    "preferredSeatClass": {
+      "enum": [
+        "ECONOMY",
+        "PREMIUM_ECONOMY",
+        "BUSINESS",
+        "FIRST"
+      ],
+      "type": "string"
+    }
+  },
+  "type": "object"
+}
