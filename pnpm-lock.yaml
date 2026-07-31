@@ -555,6 +555,21 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.1)(supports-color@8.1.1)
 
+  services/search-service:
+    devDependencies:
+      '@travel/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@travel/supplier-port':
+        specifier: workspace:*
+        version: link:../../packages/supplier-port
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.20.1)(supports-color@8.1.1)
+
   services/user-service:
     dependencies:
       '@travel/contracts':

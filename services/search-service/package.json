@@ -1,0 +1,16 @@
+{
+  "name": "@travel/search-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@travel/contracts": "workspace:*",
+    "@travel/supplier-port": "workspace:*",
+    "vitest": "^2.1.9",
+    "typescript": "^5.7.2"
+  }
+}
