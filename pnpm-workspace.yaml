@@ -65,6 +65,7 @@ allowBuilds:
   argon2: true
   esbuild: true
   prisma: true
+  protobufjs: true
 
 onlyBuiltDependencies:
   - "@prisma/client"
@@ -72,3 +73,4 @@ onlyBuiltDependencies:
   - argon2
   - esbuild
   - prisma
+  - protobufjs
