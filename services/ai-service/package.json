@@ -1,0 +1,20 @@
+{
+  "name": "@travel/ai-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@travel/contracts": "workspace:*",
+    "@travel/observability": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
