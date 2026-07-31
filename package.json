@@ -23,7 +23,5 @@
   },
   "engines": {
     "node": ">=20.0.0"
-    "build": "npm run build --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
   }
 }
