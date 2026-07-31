@@ -239,3 +239,31 @@ export {
 export type {
   AuditEventHashInputFields,
 } from './audit/canonicalize.js';
+
+// ---------------------------------------------------------------------------
+// Auth: Bonvoy OIDC schemas, principal model, error codes, and tier enum
+// ---------------------------------------------------------------------------
+
+export {
+  BonvoyMemberTierEnum,
+  BonvoyMemberTier,
+  AuthErrorCodeEnum,
+  AuthErrorCode,
+  AuthStartRequestSchema,
+  AuthCallbackRequestSchema,
+  BonvoyClaimsSchema,
+  InternalPrincipalSchema,
+  PrincipalSummarySchema,
+  OIDC_PROVIDER_BONVOY,
+} from './auth/types.js';
+
+export type {
+  BonvoyMemberTier as BonvoyMemberTierType,
+  AuthErrorCode as AuthErrorCodeType,
+  AuthStartRequest,
+  AuthCallbackRequest,
+  BonvoyClaims,
+  InternalPrincipal,
+  PrincipalSummary,
+  OidcProvider,
+} from './auth/types.js';

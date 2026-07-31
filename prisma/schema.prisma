@@ -119,6 +119,11 @@ enum TravellerIdentityType {
   GUEST_TOKEN
 }
 
+enum TravellerProfileStatus {
+  ACTIVE
+  DISABLED
+}
+
 enum PathMode {
   PATH_A
   PATH_B
@@ -242,16 +247,65 @@ model TravellerProfile {
   id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   ownerRef           String                 @unique
   identityType       TravellerIdentityType
+  status             TravellerProfileStatus @default(ACTIVE)
+  lastActivityAt     DateTime?
   dataClassification DataClassificationTier @default(CONFIDENTIAL)
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
 
-  sessions     TravellerSession[]
-  tripIntents  TripIntent[]
-  itineraries  Itinerary[]
-  auditRecords AuditRecord[]
+  sessions             TravellerSession[]
+  tripIntents          TripIntent[]
+  itineraries          Itinerary[]
+  auditRecords         AuditRecord[]
+  identityAccountLinks IdentityAccountLink[]
 
   @@map("traveller_profile")
+}
+
+// ---------------------------------------------------------------------------
+// IdentityAccountLink
+// Links a TravellerProfile to a Bonvoy OIDC identity provider record.
+// providerSubjectHash is SHA-256(sub) — the raw Bonvoy subject is never stored.
+// ---------------------------------------------------------------------------
+
+model IdentityAccountLink {
+  id                  String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  travellerProfileId  String                 @db.Uuid
+  provider            String                 @default("bonvoy")
+  providerSubjectHash String
+  verifiedTier        String
+  linkedAt            DateTime               @default(now())
+  lastLoginAt         DateTime               @default(now())
+  dataClassification  DataClassificationTier @default(CONFIDENTIAL)
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+
+  travellerProfile TravellerProfile @relation(fields: [travellerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerSubjectHash])
+  @@index([travellerProfileId])
+  @@map("identity_account_link")
+}
+
+// ---------------------------------------------------------------------------
+// OidcLoginChallenge
+// Short-lived one-time-use challenge for replay prevention.
+// stateHash, nonceHash, and pkceVerifierHash store SHA-256 digests;
+// raw values are never persisted. consumedAt is set on first use.
+// ---------------------------------------------------------------------------
+
+model OidcLoginChallenge {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stateHash        String    @unique
+  nonceHash        String
+  pkceVerifierHash String
+  expiresAt        DateTime
+  consumedAt       DateTime?
+  correlationId    String
+  createdAt        DateTime  @default(now())
+
+  @@index([expiresAt])
+  @@map("oidc_login_challenge")
 }
 
 // ---------------------------------------------------------------------------
