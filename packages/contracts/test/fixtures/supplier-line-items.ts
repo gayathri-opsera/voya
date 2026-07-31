@@ -9,7 +9,7 @@
  * All values are synthetic, test-only data.
  */
 
-import type { InventoryDomain } from '../../src/common/enums.js';
+import type { InventoryDomainType } from '../../src/common/enums.js';
 
 // ---------------------------------------------------------------------------
 // SupplierLineItem
@@ -22,7 +22,7 @@ export interface SupplierLineItem {
   /** Matches a manifest's supplierId in the test fixture set. */
   readonly supplierId: string;
   /** Inventory domain this line item belongs to. */
-  readonly domain: InventoryDomain;
+  readonly domain: InventoryDomainType;
   /** Elapsed seconds since the availability cache entry was written. */
   readonly availabilityDataAgeSeconds: number;
   /**
