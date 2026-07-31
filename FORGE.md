@@ -56,3 +56,10 @@
 - **Files:** 13 (+2375/-0)
 - **Duration:** 709ss
 - **Approach:** Extended the Prisma schema with two new tables (AssistantConversationCheckpoint, AssistantAgentStep) and three new enums (OrchestratorPhase, AgentStepStatus, CheckpointOutcome). Added TripConstraints/ClarificationField/SafeToolSummary types and a data-minimization validator to @voya/domain-model. Extended RepositoryResult<T> with a new EXPIRED variant. Implemented a ConversationCheckpointRepository interface with 7 methods and a Prisma-backed implementation that enforces optimistic concurrency (checkpointVersion), ownership guards (NOT_FOUND for cross-owner), expiry detection (EXPIRED for past-expiresAt), and payload data minimization (validateCheckpointPayload rejects sensitive field names). DEGRADED AgentStepStatus persists distinctly from FAILED so the UI progress spine can surface degraded domains. Created committed fixtures for all 8 scenarios and unit tests (40+ cases, no DB) plus integration tests (skipped without DATABASE_URL).
+
+## WO-572: User Story: WO-572 - Persist Collections And Saved Homes
+- **Status:** completed
+- **Commit:** `85306c5`
+- **Files:** 15 (+2758/-0)
+- **Duration:** 782ss
+- **Approach:** Extended the Prisma schema with 8 new models for discovery and saved homes (Destination, CuratedCollection, HomeInventoryReference, CollectionHome, InterestTag, CollectionInterestTag, HomeInterestTag, SavedHome). Added migration 000004. Created domain validators in discovery.ts and saved-homes.ts. Implemented DiscoveryRepository and SavedHomeRepository interfaces with Prisma-backed classes. Upsert idempotency is achieved via find-then-create (not Prisma upsert) to preserve original savedAt. Cross-owner reads return NOT_FOUND per resource enumeration guard. Interest tag derivation uses flat-map + dedup + alphabetical sort. All 5 Marriott-inspired collections committed as fixtures with synthetic HVMI home references.
