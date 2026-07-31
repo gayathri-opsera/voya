@@ -7,9 +7,7 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 export default defineConfig({
   resolve: {
     alias: {
-      // Allow integration tests to import by workspace package name,
-      // simulating consumption from a downstream service.
-      '@voya/contracts': resolve(__dirname, 'src/index.ts'),
+      '@voya/contracts': resolve(__dirname, '../../packages/contracts/src/index.ts'),
     },
   },
   test: {
