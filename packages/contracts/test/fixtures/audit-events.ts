@@ -82,7 +82,7 @@ const partiallyRedacted: RedactionMeta = {
 // ---------------------------------------------------------------------------
 
 export const sourcingOrderEvent: AuditEvent = (() => {
-  const eventId = 'evt_test_sourcing_001_00000000-0000-4000-8000-000000000001';
+  const eventId = '00000000-0000-4000-8000-000000000001';
   const occurredAt = '2026-01-15T10:00:00.000Z';
   const resource: ResourceRef = {
     resourceType: 'TRIP_INTENT',
@@ -111,7 +111,7 @@ export const sourcingOrderEvent: AuditEvent = (() => {
 // ---------------------------------------------------------------------------
 
 export const hvmiFallbackDisclosureEvent: AuditEvent = (() => {
-  const eventId = 'evt_test_fallback_001_00000000-0000-4000-8000-000000000002';
+  const eventId = '00000000-0000-4000-8000-000000000002';
   const occurredAt = '2026-01-15T10:00:05.000Z';
   const resource: ResourceRef = {
     resourceType: 'TRIP_INTENT',
@@ -141,7 +141,7 @@ export const hvmiFallbackDisclosureEvent: AuditEvent = (() => {
 // ---------------------------------------------------------------------------
 
 export const manifestExclusionEvent: AuditEvent = (() => {
-  const eventId = 'evt_test_manifest_excl_001_00000000-0000-4000-8000-000000000003';
+  const eventId = '00000000-0000-4000-8000-000000000003';
   const occurredAt = '2026-01-15T10:00:10.000Z';
   const resource: ResourceRef = {
     resourceType: 'SUPPLIER_MANIFEST',
@@ -170,7 +170,7 @@ export const manifestExclusionEvent: AuditEvent = (() => {
 // ---------------------------------------------------------------------------
 
 export const receiptIssuedEvent: AuditEvent = (() => {
-  const eventId = 'evt_test_receipt_issued_001_00000000-0000-4000-8000-000000000004';
+  const eventId = '00000000-0000-4000-8000-000000000004';
   const occurredAt = '2026-01-15T10:05:00.000Z';
   const resource: ResourceRef = {
     resourceType:    'TRIP_CONFIDENCE_RECEIPT',
@@ -201,7 +201,7 @@ export const receiptIssuedEvent: AuditEvent = (() => {
 // ---------------------------------------------------------------------------
 
 export const receiptBlockedEvent: AuditEvent = (() => {
-  const eventId = 'evt_test_receipt_blocked_001_00000000-0000-4000-8000-000000000005';
+  const eventId = '00000000-0000-4000-8000-000000000005';
   const occurredAt = '2026-01-15T11:00:00.000Z';
   const resource: ResourceRef = {
     resourceType:    'TRIP_CONFIDENCE_RECEIPT',
@@ -232,7 +232,7 @@ export const receiptBlockedEvent: AuditEvent = (() => {
 // ---------------------------------------------------------------------------
 
 export const promptSafetyRejectionEvent: AuditEvent = (() => {
-  const eventId = 'evt_test_prompt_rejected_001_00000000-0000-4000-8000-000000000006';
+  const eventId = '00000000-0000-4000-8000-000000000006';
   const occurredAt = '2026-01-15T09:30:00.000Z';
   const resource: ResourceRef = {
     resourceType: 'PROMPT_REQUEST',
@@ -261,7 +261,7 @@ export const promptSafetyRejectionEvent: AuditEvent = (() => {
 // ---------------------------------------------------------------------------
 
 export const loyaltySimulatedQuoteEvent: AuditEvent = (() => {
-  const eventId = 'evt_test_loyalty_quote_001_00000000-0000-4000-8000-000000000007';
+  const eventId = '00000000-0000-4000-8000-000000000007';
   const occurredAt = '2026-01-15T10:10:00.000Z';
   const resource: ResourceRef = {
     resourceType: 'LOYALTY_TRANSACTION',
@@ -291,7 +291,7 @@ export const loyaltySimulatedQuoteEvent: AuditEvent = (() => {
 // ---------------------------------------------------------------------------
 
 export const loyaltySimulatedHoldEvent: AuditEvent = (() => {
-  const eventId = 'evt_test_loyalty_hold_001_00000000-0000-4000-8000-000000000008';
+  const eventId = '00000000-0000-4000-8000-000000000008';
   const occurredAt = '2026-01-15T10:15:00.000Z';
   const resource: ResourceRef = {
     resourceType: 'LOYALTY_TRANSACTION',
@@ -321,7 +321,7 @@ export const loyaltySimulatedHoldEvent: AuditEvent = (() => {
 // ---------------------------------------------------------------------------
 
 export const loyaltySimulatedCommitEvent: AuditEvent = (() => {
-  const eventId = 'evt_test_loyalty_commit_001_00000000-0000-4000-8000-000000000009';
+  const eventId = '00000000-0000-4000-8000-000000000009';
   const occurredAt = '2026-01-15T10:20:00.000Z';
   const resource: ResourceRef = {
     resourceType: 'LOYALTY_TRANSACTION',
@@ -351,7 +351,7 @@ export const loyaltySimulatedCommitEvent: AuditEvent = (() => {
 // ---------------------------------------------------------------------------
 
 export const loyaltySimulatedReversalEvent: AuditEvent = (() => {
-  const eventId = 'evt_test_loyalty_reversal_001_00000000-0000-4000-8000-000000000010';
+  const eventId = '00000000-0000-4000-8000-000000000010';
   const occurredAt = '2026-01-15T10:25:00.000Z';
   const resource: ResourceRef = {
     resourceType: 'LOYALTY_TRANSACTION',
@@ -381,7 +381,7 @@ export const loyaltySimulatedReversalEvent: AuditEvent = (() => {
 // ---------------------------------------------------------------------------
 
 export const checkoutStateTransitionEvent: AuditEvent = (() => {
-  const eventId = 'evt_test_checkout_state_001_00000000-0000-4000-8000-000000000011';
+  const eventId = '00000000-0000-4000-8000-000000000011';
   const occurredAt = '2026-01-15T10:30:00.000Z';
   const resource: ResourceRef = {
     resourceType: 'CHECKOUT_SESSION',
@@ -410,7 +410,7 @@ export const checkoutStateTransitionEvent: AuditEvent = (() => {
 // ---------------------------------------------------------------------------
 
 export const authenticationEvent: AuditEvent = (() => {
-  const eventId = 'evt_test_auth_001_00000000-0000-4000-8000-000000000012';
+  const eventId = '00000000-0000-4000-8000-000000000012';
   const occurredAt = '2026-01-15T09:00:00.000Z';
   const resource: ResourceRef = {
     resourceType: 'TRAVELLER_SESSION',
@@ -439,7 +439,7 @@ export const authenticationEvent: AuditEvent = (() => {
 // ---------------------------------------------------------------------------
 
 export const retentionDecisionEvent: AuditEvent = (() => {
-  const eventId = 'evt_test_retention_001_00000000-0000-4000-8000-000000000013';
+  const eventId = '00000000-0000-4000-8000-000000000013';
   const occurredAt = '2026-06-15T00:00:00.000Z';
   const resource: ResourceRef = {
     resourceType: 'RETENTION_POLICY',
@@ -471,7 +471,7 @@ export const retentionDecisionEvent: AuditEvent = (() => {
 // ---------------------------------------------------------------------------
 
 export const adminApprovalEvidenceEvent: AuditEvent = (() => {
-  const eventId = 'evt_test_admin_approval_001_00000000-0000-4000-8000-000000000014';
+  const eventId = '00000000-0000-4000-8000-000000000014';
   const occurredAt = '2026-03-01T14:00:00.000Z';
   const resource: ResourceRef = {
     resourceType: 'ADMIN_APPROVAL',

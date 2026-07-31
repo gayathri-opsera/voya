@@ -311,3 +311,11 @@ export {
 export type {
   AuditEventHashInputFields,
 } from './audit/canonicalize.js';
+
+// ---------------------------------------------------------------------------
+// Audit: ledger row mapping — AuditEvent -> AuditLedger persistence shape
+// ---------------------------------------------------------------------------
+
+export { toAuditLedgerRow } from './audit/ledger-row.js';
+
+export type { AuditLedgerRow } from './audit/ledger-row.js';
