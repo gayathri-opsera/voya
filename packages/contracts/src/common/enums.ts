@@ -6,11 +6,26 @@
  * controlled vocabularies used by itinerary, sourcing, and verification contracts.
  *
  * Do NOT redefine these strings in other packages – import from here.
+ *
+ * NOTE ON DUAL REPRESENTATIONS:
+ * `InventoryDomain`, `SourceClassification`, and `ReceiptOutcome` are exposed
+ * as plain TypeScript enums (this is the representation the itinerary
+ * contracts — TripConstraints, ItineraryLineItem, TripConfidenceReceipt — are
+ * built against via `z.nativeEnum(...)`). The Zod-schema counterparts used by
+ * cross-domain infrastructure (audit, governance, supplier capability
+ * manifest) are exported separately with an `Enum` suffix
+ * (`InventoryDomainEnum`, `SourceClassificationEnum`, `ReceiptOutcomeEnum`)
+ * and use the persistence-layer (Prisma-aligned) uppercase vocabulary from
+ * `@voya/domain-model`. Reconciling these two vocabularies into one is
+ * tracked separately and is out of scope for this change.
  */
 
-/**
- * Top-level inventory domain for a line item in an assembled itinerary.
- */
+import { z } from 'zod';
+
+// ---------------------------------------------------------------------------
+// InventoryDomain
+// Top-level inventory domain for a line item in an assembled itinerary.
+// ---------------------------------------------------------------------------
 export enum InventoryDomain {
   ACCOMMODATION = 'accommodation',
   DINING = 'dining',
@@ -89,14 +104,6 @@ export enum PricingUnit {
   TOTAL = 'total',
   PER_ITEM = 'per-item',
 }
- * @voya/contracts — Cross-domain enums
- *
- * These enums are the single source of truth for all cross-domain categorical
- * values used across Voya services. Do NOT redefine these values in downstream
- * packages; import from this module instead.
- */
-
-import { z } from 'zod';
 
 // ---------------------------------------------------------------------------
 // PathMode
@@ -115,8 +122,10 @@ export type PathMode = z.infer<typeof PathModeEnum>;
 export const PathMode = PathModeEnum.enum;
 
 // ---------------------------------------------------------------------------
-// InventoryDomain
-// Identifies the product domain a sourced line item belongs to.
+// InventoryDomainEnum
+// Zod-schema counterpart of InventoryDomain using the persistence-layer
+// (Prisma-aligned) uppercase vocabulary. Used by cross-domain infrastructure
+// (supplier capability manifest, audit) rather than the itinerary schemas.
 // ---------------------------------------------------------------------------
 
 export const InventoryDomainEnum = z.enum([
@@ -127,8 +136,7 @@ export const InventoryDomainEnum = z.enum([
   'TRANSPORT',
   'WEATHER_ADVISORY',
 ]);
-export type InventoryDomain = z.infer<typeof InventoryDomainEnum>;
-export const InventoryDomain = InventoryDomainEnum.enum;
+export type InventoryDomainType = z.infer<typeof InventoryDomainEnum>;
 
 // ---------------------------------------------------------------------------
 // BookingSource
@@ -146,8 +154,9 @@ export type BookingSource = z.infer<typeof BookingSourceEnum>;
 export const BookingSource = BookingSourceEnum.enum;
 
 // ---------------------------------------------------------------------------
-// SourceClassification
-// Declares ownership or partnership tier of an inventory source.
+// SourceClassificationEnum
+// Zod-schema counterpart of SourceClassification using the persistence-layer
+// uppercase vocabulary. Used by the supplier capability manifest.
 // ---------------------------------------------------------------------------
 
 export const SourceClassificationEnum = z.enum([
@@ -155,8 +164,7 @@ export const SourceClassificationEnum = z.enum([
   'MARRIOTT_PARTNERED', // HVMI and other contracted partners
   'EXEMPT_PUBLIC',      // Municipal / public attractions exempt from exclusivity
 ]);
-export type SourceClassification = z.infer<typeof SourceClassificationEnum>;
-export const SourceClassification = SourceClassificationEnum.enum;
+export type SourceClassificationType = z.infer<typeof SourceClassificationEnum>;
 
 // ---------------------------------------------------------------------------
 // DegradedReason
@@ -178,8 +186,9 @@ export type DegradedReason = z.infer<typeof DegradedReasonEnum>;
 export const DegradedReason = DegradedReasonEnum.enum;
 
 // ---------------------------------------------------------------------------
-// ReceiptOutcome
-// Result of a Trip Confidence Receipt evaluation.
+// ReceiptOutcomeEnum
+// Zod-schema counterpart of ReceiptOutcome using the persistence-layer
+// uppercase vocabulary.
 // ---------------------------------------------------------------------------
 
 export const ReceiptOutcomeEnum = z.enum([
@@ -187,8 +196,7 @@ export const ReceiptOutcomeEnum = z.enum([
   'BLOCKED',
   'STALE',
 ]);
-export type ReceiptOutcome = z.infer<typeof ReceiptOutcomeEnum>;
-export const ReceiptOutcome = ReceiptOutcomeEnum.enum;
+export type ReceiptOutcomeType = z.infer<typeof ReceiptOutcomeEnum>;
 
 // ---------------------------------------------------------------------------
 // SupplierBookability
