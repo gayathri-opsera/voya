@@ -244,6 +244,8 @@ importers:
         specifier: 'catalog:'
         version: 2.1.9(@types/node@20.19.43)(supports-color@8.1.1)
 
+  packages/test-fixtures: {}
+
   services/ai-orchestration:
     dependencies:
       '@travel/contracts':
