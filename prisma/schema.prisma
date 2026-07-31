@@ -183,6 +183,49 @@ enum CheckpointOutcome {
 }
 
 // ---------------------------------------------------------------------------
+// Simulated loyalty ledger enums
+// ---------------------------------------------------------------------------
+
+enum LoyaltyTransactionType {
+  QUOTE
+  HOLD
+  COMMIT
+  REVERSAL
+  ADJUSTMENT
+}
+
+enum LoyaltyLedgerStatus {
+  QUOTED
+  HELD
+  COMMITTED
+  REVERSED
+  EXPIRED
+  ADJUSTED
+}
+
+enum RedemptionMode {
+  STANDARD_AWARD_NIGHT
+  CASH_PLUS_POINTS
+  CERTIFICATE
+  POINTS_ADVANCE
+}
+
+enum PointsAdvanceEligibility {
+  ELIGIBLE
+  INELIGIBLE
+  NOT_EVALUATED
+}
+
+enum SimulatedLiabilityCategory {
+  ESTIMATED_EARN
+  AWARD_NIGHT_REDEMPTION
+  CASH_PLUS_POINTS_REDEMPTION
+  CERTIFICATE_REDEMPTION
+  POINTS_ADVANCE_REDEMPTION
+  ADJUSTMENT
+}
+
+// ---------------------------------------------------------------------------
 // TravellerProfile
 // Owns all traveller-linked aggregates. ownerRef is a tokenised reference
 // (Bonvoy token or guest-session token) — never a raw Bonvoy account number.
@@ -808,4 +851,146 @@ model SavedHome {
   @@index([ownerRef])
   @@index([homeRefId])
   @@map("saved_home")
+}
+
+// ---------------------------------------------------------------------------
+// LoyaltyQuote
+// A pseudo-redemption estimate. Immutable once created — a quote never
+// transitions state; a subsequent hold may reference it via quoteId.
+// simulated is always true: no real Bonvoy balance is read or reserved.
+// ---------------------------------------------------------------------------
+
+model LoyaltyQuote {
+  id                       String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerRef                 String
+  itineraryRef             String?
+  sourceLineRef            String?
+  redemptionMode           RedemptionMode
+  pointsAmount             Int
+  cashAmountMinorUnits     Int?
+  currencyCode             String?
+  certificateRef           String?
+  pointsAdvanceEligibility PointsAdvanceEligibility   @default(NOT_EVALUATED)
+  liabilityCategory        SimulatedLiabilityCategory
+  simulated                Boolean                    @default(true)
+  idempotencyKey           String                     @unique
+  dataClassification       DataClassificationTier     @default(INTERNAL)
+  createdAt                DateTime                   @default(now())
+
+  holds LoyaltyHold[]
+
+  @@index([ownerRef])
+  @@index([itineraryRef])
+  @@map("loyalty_quote")
+}
+
+// ---------------------------------------------------------------------------
+// LoyaltyHold
+// Invariant hold data, written once by placeHold and never updated in place.
+// Current status is derived from the most recent LoyaltyLedgerEntry for this
+// hold, not stored as a mutable column here — see deriveHoldStatus().
+// ---------------------------------------------------------------------------
+
+model LoyaltyHold {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  quoteId              String?                @db.Uuid
+  ownerRef             String
+  itineraryRef         String?
+  sourceLineRef        String?
+  redemptionMode       RedemptionMode
+  pointsAmount         Int
+  cashAmountMinorUnits Int?
+  currencyCode         String?
+  simulated            Boolean                @default(true)
+  idempotencyKey       String                 @unique
+  expiresAt            DateTime?
+  dataClassification   DataClassificationTier @default(INTERNAL)
+  createdAt            DateTime               @default(now())
+
+  quote         LoyaltyQuote?        @relation(fields: [quoteId], references: [id])
+  ledgerEntries LoyaltyLedgerEntry[]
+
+  @@index([ownerRef])
+  @@index([itineraryRef])
+  @@map("loyalty_hold")
+}
+
+// ---------------------------------------------------------------------------
+// LoyaltyLedgerEntry
+// Append-only audit trail of every lifecycle event (HOLD placed, COMMIT
+// applied, REVERSAL applied, ADJUSTMENT). Rows are never updated or deleted
+// after insert — this is the accounting source of truth. simulated is always
+// true: no entry here ever reflects a real Bonvoy balance change.
+// ---------------------------------------------------------------------------
+
+model LoyaltyLedgerEntry {
+  id                   String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  holdId               String?                    @db.Uuid
+  ownerRef             String
+  itineraryRef         String?
+  sourceLineRef        String?
+  transactionType      LoyaltyTransactionType
+  status               LoyaltyLedgerStatus
+  redemptionMode       RedemptionMode
+  pointsAmount         Int
+  cashAmountMinorUnits Int?
+  currencyCode         String?
+  liabilityCategory    SimulatedLiabilityCategory
+  simulated            Boolean                    @default(true)
+  idempotencyKey       String                     @unique
+  dataClassification   DataClassificationTier     @default(INTERNAL)
+  createdAt            DateTime                   @default(now())
+
+  hold LoyaltyHold? @relation(fields: [holdId], references: [id])
+
+  @@index([ownerRef])
+  @@index([holdId])
+  @@index([transactionType])
+  @@index([status])
+  @@map("loyalty_ledger_entry")
+}
+
+// ---------------------------------------------------------------------------
+// LoyaltyReconciliationSnapshot
+// Generated (never mutated) point-in-time summary over a reconciliation
+// period, computed from LoyaltyLedgerEntry rows. Finance-auditable evidence
+// that simulated liability never silently diverges from ledger totals.
+// ---------------------------------------------------------------------------
+
+model LoyaltyReconciliationSnapshot {
+  id                           String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  periodStart                  DateTime
+  periodEnd                    DateTime
+  totalPointsHeld              Int
+  totalPointsCommitted         Int
+  totalPointsReversed          Int
+  totalCashMinorUnitsCommitted Int
+  currencyCode                 String?
+  simulated                    Boolean                @default(true)
+  dataClassification           DataClassificationTier @default(INTERNAL)
+  generatedAt                  DateTime               @default(now())
+
+  @@index([periodStart, periodEnd])
+  @@map("loyalty_reconciliation_snapshot")
+}
+
+// ---------------------------------------------------------------------------
+// CertificateReference
+// Synthetic, tokenized certificate reference used by CERTIFICATE redemption
+// mode quotes and holds. Never a real Bonvoy certificate identifier.
+// ---------------------------------------------------------------------------
+
+model CertificateReference {
+  id                 String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  certificateRef     String                 @unique
+  ownerRef           String
+  isRedeemed         Boolean                @default(false)
+  redeemedAt         DateTime?
+  expiresAt          DateTime?
+  simulated          Boolean                @default(true)
+  dataClassification DataClassificationTier @default(INTERNAL)
+  createdAt          DateTime               @default(now())
+
+  @@index([ownerRef])
+  @@map("certificate_reference")
 }

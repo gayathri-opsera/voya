@@ -108,3 +108,22 @@ export {
   type DiscoveryFixture,
   type SavedHomeFixture,
 } from './discovery-fixtures.js';
+
+export {
+  // Owner references
+  LOYALTY_OWNER_A,
+  LOYALTY_OWNER_B,
+  crossOwnerLoyaltyRef,
+  // Quote fixtures
+  simulatedEarnQuoteInput,
+  cashPlusPointsQuoteInput,
+  certificateEligibilityQuoteInput,
+  pointsAdvanceEligibleQuoteInput,
+  pointsAdvanceIneligibleQuoteInput,
+  // Hold fixture
+  standardHoldInput,
+  // Commit / reversal input builders
+  makeCommitInput,
+  makeValidReversalInput,
+  makeOverReversalInput,
+} from './loyalty-ledger-fixtures.js';

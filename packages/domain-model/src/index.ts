@@ -118,3 +118,34 @@ export {
   deduplicateTagKeys,
   deriveInterestTagsFromSavedHomes,
 } from './saved-homes.js';
+
+// ---------------------------------------------------------------------------
+// Simulated loyalty ledger domain types
+// ---------------------------------------------------------------------------
+
+export {
+  LoyaltyTransactionType,
+  LoyaltyLedgerStatus,
+  RedemptionMode,
+  PointsAdvanceEligibility,
+  SimulatedLiabilityCategory,
+  isActiveHoldStatus,
+  isReversibleStatus,
+  deriveHoldStatus,
+  isValidPointsAmount,
+  validatePointsAmount as validateLoyaltyPointsAmount,
+  isValidMonetaryMinorUnits,
+  validateMonetaryMinorUnits,
+  isValidIdempotencyKey,
+  validateIdempotencyKey,
+  isValidCertificateRef,
+  validateCertificateRef,
+  validateRedemptionModeInput,
+  computeReconciliationTotals,
+} from './loyalty-ledger.js';
+
+export type {
+  RedemptionModeInput,
+  LedgerEntryTotals,
+  ReconciliationTotals,
+} from './loyalty-ledger.js';

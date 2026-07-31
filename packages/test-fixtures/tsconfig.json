@@ -5,7 +5,8 @@
     "outDir": "dist",
     "composite": true,
     "paths": {
-      "@voya/domain-model": ["../domain-model/src/index.ts"]
+      "@voya/domain-model": ["../domain-model/src/index.ts"],
+      "@voya/domain-repositories": ["../domain-repositories/src/index.ts"]
     }
   },
   "include": ["src/**/*.ts"],

@@ -101,6 +101,19 @@ export type {
   SavedHomeRepository,
 } from './interfaces/saved-home-repository.js';
 
+export type {
+  LoyaltyQuoteRow,
+  LoyaltyHoldRow,
+  LoyaltyLedgerEntryRow,
+  LoyaltyReconciliationSnapshotRow,
+  CreateQuoteInput,
+  PlaceHoldInput,
+  CommitHoldInput,
+  ReverseHoldInput,
+  AppendAdjustmentInput,
+  SimulatedLoyaltyLedgerRepository,
+} from './interfaces/simulated-loyalty-ledger-repository.js';
+
 // ---------------------------------------------------------------------------
 // Prisma-backed implementations
 // ---------------------------------------------------------------------------
@@ -114,3 +127,4 @@ export { PrismaAuditRecordRepository } from './prisma/prisma-audit-record-reposi
 export { PrismaConversationCheckpointRepository } from './prisma/prisma-conversation-checkpoint-repository.js';
 export { PrismaDiscoveryRepository } from './prisma/prisma-discovery-repository.js';
 export { PrismaSavedHomeRepository } from './prisma/prisma-saved-home-repository.js';
+export { PrismaSimulatedLoyaltyLedgerRepository } from './prisma/prisma-simulated-loyalty-ledger-repository.js';
